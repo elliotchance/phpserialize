@@ -3,6 +3,7 @@ package phpserialize_test
 import (
 	"errors"
 	"github.com/elliotchance/phpserialize"
+	"reflect"
 	"testing"
 )
 
@@ -281,27 +282,74 @@ func TestUnmarshalBinary(t *testing.T) {
 	}
 }
 
-//func decodeArray(input []byte, output []interface{}, expectedError error) {
-//	var result []interface{}
-//	err := phpserialize.Unmarshal(test.input, &result)
-//
-//	if test.expectedError == nil {
-//		expectErrorToNotHaveOccurred(t, err)
-//		Expect(len(result)).To(Equal(len(output)))
-//		for k, _ := range result {
-//			// Ginkgo has a safety feature when comparing two nil
-//			// values for equality. You have to use the nil
-//			// assertions. I this case it's not important.
-//			if result[k] != nil || output[k] != nil {
-//				Expect(result[k]).To(BeEquivalentTo(output[k]))
-//			}
-//		}
-//	} else {
-//		expectErrorToNotHaveOccurred(t, err)
-//		expectErrorToEqual(t, err, test.expectedError)
-//	}
-//}
-//
+func TestUnmarshalArray(t *testing.T) {
+	tests := map[string]struct {
+		input         []byte
+		output        []interface{}
+		expectedError error
+	}{
+		"[]interface{}: [7.89]": {
+			[]byte("a:1:{i:0;d:7.89;}"),
+			[]interface{}{7.89},
+			nil,
+		},
+		"[]interface{}: [7, 8, 9]": {
+			[]byte("a:3:{i:0;i:7;i:1;i:8;i:2;i:9;}"),
+			[]interface{}{int64(7), int64(8), int64(9)},
+			nil,
+		},
+		"[]interface{}: [7.2, 'foo']": {
+			[]byte("a:2:{i:0;d:7.2;i:1;s:3:\"foo\";}"),
+			[]interface{}{7.2, "foo"},
+			nil,
+		},
+		"[]interface{}: [null]": {
+			[]byte("a:1:{i:0;N;}"),
+			[]interface{}{nil},
+			nil,
+		},
+		"[]interface{}: [true, false]": {
+			[]byte("a:2:{i:0;b:1;i:1;b:0;}"),
+			[]interface{}{true, false},
+			nil,
+		},
+		"cannot decode map as slice": {
+			[]byte("a:2:{i:0;b:1;i:5;b:0;}"),
+			[]interface{}{},
+			errors.New("cannot decode map as slice"),
+		},
+		"not an array": {
+			[]byte("N;"),
+			[]interface{}{},
+			errors.New("not an array"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			var result []interface{}
+			err := phpserialize.Unmarshal(test.input, &result)
+
+			if test.expectedError == nil {
+				expectErrorToNotHaveOccurred(t, err)
+				if len(result) != len(test.output) {
+					t.Errorf("Expected %v, got %v", len(result), len(test.output))
+				}
+
+				for k, _ := range result {
+					if !reflect.DeepEqual(result[k], test.output[k]) {
+						t.Errorf("Expected %v (%s), got %v (%s) for #%d",
+							result[k], reflect.TypeOf(result[k]).Name(),
+							test.output[k], reflect.TypeOf(test.output[k]).Name(), k)
+					}
+				}
+			} else {
+				expectErrorToEqual(t, err, test.expectedError)
+			}
+		})
+	}
+}
+
 //func decodeAssociativeArray(input []byte, output map[interface{}]interface{}, expectedError error) {
 //	result := make(map[interface{}]interface{})
 //	err := phpserialize.Unmarshal(test.input, &result)
@@ -357,45 +405,19 @@ func TestUnmarshalWithBooleanTrue(t *testing.T) {
 //
 //var _ = Describe("phpserialize", func() {
 //	Describe("Unmarshal - unserialize()", func() {
-//		DescribeTable("decode array (slice)",
-//			decodeArray,
-//
-//			Entry("[]interface{}: [7.89]", []byte("a:1:{i:0;d:7.89;}"),
-//				[]interface{}{7.89}, nil),
-//			Entry("[]interface{}: [7, 8, 9]",
-//				[]byte("a:3:{i:0;i:7;i:1;i:8;i:2;i:9;}"),
-//				[]interface{}{7, 8, 9}, nil),
-//			Entry("[]interface{}: [7.2, 'foo']",
-//				[]byte("a:2:{i:0;d:7.2;i:1;s:3:\"foo\";}"),
-//				[]interface{}{7.2, "foo"}, nil),
-//			Entry("[]interface{}: [null]",
-//				[]byte("a:1:{i:0;N;}"),
-//				[]interface{}{nil}, nil),
-//			Entry("[]interface{}: [true, false]",
-//				[]byte("a:2:{i:0;b:1;i:1;b:0;}"),
-//				[]interface{}{true, false}, nil),
-//
-//			Entry("cannot decode map as slice",
-//				[]byte("a:2:{i:0;b:1;i:5;b:0;}"),
-//				[]interface{}{},
-//				errors.New("cannot decode map as slice")),
-//			Entry("not an array", []byte("N;"), []interface{}{},
-//				errors.New("not an array")),
-//		)
-//
 //		DescribeTable("decode associative array (map)",
 //			decodeAssociativeArray,
 //
-//			Entry("map[interface{}]interface{}: {'foo': 10, 'bar': 20}",
+//			{"map[interface{}]interface{}: {'foo': 10, 'bar': 20}",
 //				[]byte("a:2:{s:3:\"bar\";i:20;s:3:\"foo\";i:10;}"),
 //				map[interface{}]interface{}{"foo": int64(10), "bar": int64(20)},
 //				nil),
-//			Entry("map[interface{}]interface{}: {1: 10, 2: 'foo'}",
+//			{"map[interface{}]interface{}: {1: 10, 2: 'foo'}",
 //				[]byte("a:2:{i:1;i:10;i:2;s:3:\"foo\";}"),
 //				map[interface{}]interface{}{int64(1): int64(10), int64(2): "foo"},
 //				nil),
 //
-//			Entry("not an array", []byte("N;"),
+//			{"not an array", []byte("N;"),
 //				map[interface{}]interface{}{},
 //				errors.New("not an array")),
 //		)

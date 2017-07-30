@@ -429,20 +429,21 @@ func TestUnmarshalWithBooleanTrue(t *testing.T) {
 	}
 }
 
-//
-//var _ = Describe("phpserialize", func() {
-//	Describe("Unmarshal - unserialize()", func() {
-//		Describe("decode object", func() {
-//			It("struct1{Foo int, Bar Struct2{Qux float64}, hidden bool}", func() {
-//				data := "O:7:\"struct1\":3:{s:3:\"foo\";i:10;s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:1.23;}s:3:\"baz\";s:3:\"yay\";}"
-//				var result struct1
-//				err := phpserialize.Unmarshal([]byte(data), &result)
-//				expectErrorToNotHaveOccurred(t, err)
-//
-//				Expect(result.Foo).To(Equal(10))
-//				Expect(result.Bar.Qux).To(Equal(1.23))
-//				Expect(result.Baz).To(Equal("yay"))
-//			})
-//		})
-//	})
-//})
+func TestUnmarshalObject(t *testing.T) {
+	data := "O:7:\"struct1\":3:{s:3:\"foo\";i:10;s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:1.23;}s:3:\"baz\";s:3:\"yay\";}"
+	var result struct1
+	err := phpserialize.Unmarshal([]byte(data), &result)
+	expectErrorToNotHaveOccurred(t, err)
+
+	if result.Foo != 10 {
+		t.Errorf("Expected %v, got %v", 10, result.Foo)
+	}
+
+	if result.Bar.Qux != 1.23 {
+		t.Errorf("Expected %v, got %v", 1.23, result.Bar.Qux)
+	}
+
+	if result.Baz != "yay" {
+		t.Errorf("Expected %v, got %v", "yay", result.Baz)
+	}
+}

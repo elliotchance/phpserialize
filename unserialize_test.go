@@ -250,21 +250,37 @@ func TestUnmarshalString(t *testing.T) {
 	}
 }
 
-//func decodeBinary(input []byte, output []byte, expectedError error) {
-//	var result []byte
-//	err := phpserialize.Unmarshal(test.input, &result)
-//
-//	if test.expectedError == nil {
-//		expectErrorToNotHaveOccurred(t, err)
-//		if result != test.output {
-//						t.Errorf("Expected '%v', got '%v'", result, test.output)
-//					}
-//	} else {
-//		expectErrorToNotHaveOccurred(t, err)
-//		expectErrorToEqual(t, err, test.expectedError)
-//	}
-//}
-//
+func TestUnmarshalBinary(t *testing.T) {
+	tests := map[string]struct {
+		input         []byte
+		output        []byte
+		expectedError error
+	}{
+		"[]byte: \\001\\002\\003": {
+			[]byte("s:3:\"\\x01\\x02\\x03\";"),
+			[]byte{1, 2, 3},
+			nil,
+		},
+		"not a string": {[]byte("N;"), []byte{}, errors.New("not a string")},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			var result []byte
+			err := phpserialize.Unmarshal(test.input, &result)
+
+			if test.expectedError == nil {
+				expectErrorToNotHaveOccurred(t, err)
+				if string(result) != string(test.output) {
+					t.Errorf("Expected '%v', got '%v'", result, test.output)
+				}
+			} else {
+				expectErrorToEqual(t, err, test.expectedError)
+			}
+		})
+	}
+}
+
 //func decodeArray(input []byte, output []interface{}, expectedError error) {
 //	var result []interface{}
 //	err := phpserialize.Unmarshal(test.input, &result)
@@ -341,15 +357,6 @@ func TestUnmarshalWithBooleanTrue(t *testing.T) {
 //
 //var _ = Describe("phpserialize", func() {
 //	Describe("Unmarshal - unserialize()", func() {
-//		DescribeTable("decode binary",
-//			decodeBinary,
-//
-//			Entry("[]byte: \\001\\002\\003", []byte("s:3:\"\\x01\\x02\\x03\";"),
-//				[]byte{1, 2, 3}, nil),
-//
-//			Entry("not a string", []byte("N;"), []byte{}, errors.New("not a string")),
-//		)
-//
 //		DescribeTable("decode array (slice)",
 //			decodeArray,
 //

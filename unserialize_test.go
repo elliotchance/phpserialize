@@ -1,153 +1,186 @@
 package phpserialize_test
 
 import (
+	"errors"
 	"github.com/elliotchance/phpserialize"
 	"testing"
 )
 
-//func decodeBool(input []byte, output bool, expectedError error) {
-//	var result bool
-//	err := phpserialize.Unmarshal(input, &result)
-//
-//	if expectedError == nil {
-//		Expect(err).ToNot(HaveOccurred())
-//		Expect(result).To(Equal(output))
-//	} else {
-//		Expect(err).To(HaveOccurred())
-//		Expect(err.Error()).To(Equal(expectedError.Error()))
-//	}
-//}
-//
-//func decodeInt(input []byte, output int, expectedError error) {
-//	{
-//		var result int
-//		err := phpserialize.Unmarshal(input, &result)
-//
-//		if expectedError == nil {
-//			Expect(err).ToNot(HaveOccurred())
-//			Expect(result).To(Equal(output))
-//		} else {
-//			Expect(err).To(HaveOccurred())
-//			Expect(err.Error()).To(Equal(expectedError.Error()))
-//		}
-//	}
-//
-//	{
-//		var result int8
-//		err := phpserialize.Unmarshal(input, &result)
-//
-//		if expectedError == nil {
-//			Expect(err).ToNot(HaveOccurred())
-//			Expect(result).To(Equal(int8(output)))
-//		} else {
-//			Expect(err).To(HaveOccurred())
-//			Expect(err.Error()).To(Equal(expectedError.Error()))
-//		}
-//	}
-//
-//	{
-//		var result int16
-//		err := phpserialize.Unmarshal(input, &result)
-//
-//		if expectedError == nil {
-//			Expect(err).ToNot(HaveOccurred())
-//			Expect(result).To(Equal(int16(output)))
-//		} else {
-//			Expect(err).To(HaveOccurred())
-//			Expect(err.Error()).To(Equal(expectedError.Error()))
-//		}
-//	}
-//
-//	{
-//		var result int32
-//		err := phpserialize.Unmarshal(input, &result)
-//
-//		if expectedError == nil {
-//			Expect(err).ToNot(HaveOccurred())
-//			Expect(result).To(Equal(int32(output)))
-//		} else {
-//			Expect(err).To(HaveOccurred())
-//			Expect(err.Error()).To(Equal(expectedError.Error()))
-//		}
-//	}
-//
-//	{
-//		var result int64
-//		err := phpserialize.Unmarshal(input, &result)
-//
-//		if expectedError == nil {
-//			Expect(err).ToNot(HaveOccurred())
-//			Expect(result).To(Equal(int64(output)))
-//		} else {
-//			Expect(err).To(HaveOccurred())
-//			Expect(err.Error()).To(Equal(expectedError.Error()))
-//		}
-//	}
-//
-//	{
-//		var result uint8
-//		err := phpserialize.Unmarshal(input, &result)
-//
-//		if expectedError == nil {
-//			Expect(err).ToNot(HaveOccurred())
-//			Expect(result).To(Equal(uint8(output)))
-//		} else {
-//			Expect(err).To(HaveOccurred())
-//			Expect(err.Error()).To(Equal(expectedError.Error()))
-//		}
-//	}
-//
-//	{
-//		var result uint16
-//		err := phpserialize.Unmarshal(input, &result)
-//
-//		if expectedError == nil {
-//			Expect(err).ToNot(HaveOccurred())
-//			Expect(result).To(Equal(uint16(output)))
-//		} else {
-//			Expect(err).To(HaveOccurred())
-//			Expect(err.Error()).To(Equal(expectedError.Error()))
-//		}
-//	}
-//
-//	{
-//		var result uint32
-//		err := phpserialize.Unmarshal(input, &result)
-//
-//		if expectedError == nil {
-//			Expect(err).ToNot(HaveOccurred())
-//			Expect(result).To(Equal(uint32(output)))
-//		} else {
-//			Expect(err).To(HaveOccurred())
-//			Expect(err.Error()).To(Equal(expectedError.Error()))
-//		}
-//	}
-//
-//	{
-//		var result uint64
-//		err := phpserialize.Unmarshal(input, &result)
-//
-//		if expectedError == nil {
-//			Expect(err).ToNot(HaveOccurred())
-//			Expect(result).To(Equal(uint64(output)))
-//		} else {
-//			Expect(err).To(HaveOccurred())
-//			Expect(err.Error()).To(Equal(expectedError.Error()))
-//		}
-//	}
-//}
-//
+func expectErrorToNotHaveOccurred(t *testing.T, err error) {
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func expectErrorToEqual(t *testing.T, err1, err2 error) {
+	if err1 == nil {
+		t.Error("err1 is nil")
+	}
+
+	if err2 == nil {
+		t.Error("err2 is nil")
+	}
+
+	if err1.Error() != err2.Error() {
+		t.Errorf("Expected '%s' to be '%s'", err1, err2)
+	}
+}
+
+func TestUnmarshalInt(t *testing.T) {
+	tests := map[string]struct {
+		input         []byte
+		output        int
+		expectedError error
+	}{
+		"0":              {[]byte("i:0;"), 0, nil},
+		"5":              {[]byte("i:5;"), 5, nil},
+		"-8":             {[]byte("i:-8;"), -8, nil},
+		"1000000":        {[]byte("i:1000000;"), 1000000, nil},
+		"not an integer": {[]byte("N;"), 0, errors.New("not an integer")},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			t.Run("int", func(t *testing.T) {
+				var result int
+				err := phpserialize.Unmarshal(test.input, &result)
+
+				if test.expectedError == nil {
+					expectErrorToNotHaveOccurred(t, err)
+					if result != test.output {
+						t.Errorf("Expected '%v', got '%v'", result, test.output)
+					}
+				} else {
+					expectErrorToEqual(t, err, test.expectedError)
+				}
+			})
+
+			t.Run("int8", func(t *testing.T) {
+				var result int8
+				err := phpserialize.Unmarshal(test.input, &result)
+
+				if test.expectedError == nil {
+					expectErrorToNotHaveOccurred(t, err)
+					if result != int8(test.output) {
+						t.Errorf("Expected '%v', got '%v'", result, test.output)
+					}
+				} else {
+					expectErrorToEqual(t, err, test.expectedError)
+				}
+			})
+
+			t.Run("int16", func(t *testing.T) {
+				var result int16
+				err := phpserialize.Unmarshal(test.input, &result)
+
+				if test.expectedError == nil {
+					expectErrorToNotHaveOccurred(t, err)
+					if result != int16(test.output) {
+						t.Errorf("Expected '%v', got '%v'", result, test.output)
+					}
+				} else {
+					expectErrorToEqual(t, err, test.expectedError)
+				}
+			})
+
+			t.Run("int32", func(t *testing.T) {
+				var result int32
+				err := phpserialize.Unmarshal(test.input, &result)
+
+				if test.expectedError == nil {
+					expectErrorToNotHaveOccurred(t, err)
+					if result != int32(test.output) {
+						t.Errorf("Expected '%v', got '%v'", result, test.output)
+					}
+				} else {
+					expectErrorToEqual(t, err, test.expectedError)
+				}
+			})
+
+			t.Run("int64", func(t *testing.T) {
+				var result int64
+				err := phpserialize.Unmarshal(test.input, &result)
+
+				if test.expectedError == nil {
+					expectErrorToNotHaveOccurred(t, err)
+					if result != int64(test.output) {
+						t.Errorf("Expected '%v', got '%v'", result, test.output)
+					}
+				} else {
+					expectErrorToEqual(t, err, test.expectedError)
+				}
+			})
+
+			t.Run("uint8", func(t *testing.T) {
+				var result uint8
+				err := phpserialize.Unmarshal(test.input, &result)
+
+				if test.expectedError == nil {
+					expectErrorToNotHaveOccurred(t, err)
+					if result != uint8(test.output) {
+						t.Errorf("Expected '%v', got '%v'", result, test.output)
+					}
+				} else {
+					expectErrorToEqual(t, err, test.expectedError)
+				}
+			})
+
+			t.Run("uint16", func(t *testing.T) {
+				var result uint16
+				err := phpserialize.Unmarshal(test.input, &result)
+
+				if test.expectedError == nil {
+					expectErrorToNotHaveOccurred(t, err)
+					if result != uint16(test.output) {
+						t.Errorf("Expected '%v', got '%v'", result, test.output)
+					}
+				} else {
+					expectErrorToEqual(t, err, test.expectedError)
+				}
+			})
+
+			t.Run("uint32", func(t *testing.T) {
+				var result uint32
+				err := phpserialize.Unmarshal(test.input, &result)
+
+				if test.expectedError == nil {
+					expectErrorToNotHaveOccurred(t, err)
+					if result != uint32(test.output) {
+						t.Errorf("Expected '%v', got '%v'", result, test.output)
+					}
+				} else {
+					expectErrorToEqual(t, err, test.expectedError)
+				}
+			})
+
+			t.Run("uint64", func(t *testing.T) {
+				var result uint64
+				err := phpserialize.Unmarshal(test.input, &result)
+
+				if test.expectedError == nil {
+					expectErrorToNotHaveOccurred(t, err)
+					if result != uint64(test.output) {
+						t.Errorf("Expected '%v', got '%v'", result, test.output)
+					}
+				} else {
+					expectErrorToEqual(t, err, test.expectedError)
+				}
+			})
+		})
+	}
+}
+
 //func decodeFloat(input []byte, output float64, expectedError error) {
 //	{
 //		var result float32
 //		err := phpserialize.Unmarshal(input, &result)
 //
 //		if expectedError == nil {
-//			Expect(err).ToNot(HaveOccurred())
+//			expectErrorToNotHaveOccurred(t, err)
 //			Expect(result).To(Equal(float32(output)))
 //		} else {
-//			Expect(err).To(HaveOccurred())
-//			Expect(err.Error()).To(Equal(expectedError.Error()))
+//			expectErrorToNotHaveOccurred(t, err)
+//			expectErrorToEqual(t, err, test.expectedError)
 //		}
 //	}
 //
@@ -156,11 +189,13 @@ import (
 //		err := phpserialize.Unmarshal(input, &result)
 //
 //		if expectedError == nil {
-//			Expect(err).ToNot(HaveOccurred())
-//			Expect(result).To(Equal(output))
+//			expectErrorToNotHaveOccurred(t, err)
+//			if result != test.output {
+//						t.Errorf("Expected '%v', got '%v'", result, test.output)
+//					}
 //		} else {
-//			Expect(err).To(HaveOccurred())
-//			Expect(err.Error()).To(Equal(expectedError.Error()))
+//			expectErrorToNotHaveOccurred(t, err)
+//			expectErrorToEqual(t, err, test.expectedError)
 //		}
 //	}
 //}
@@ -170,11 +205,13 @@ import (
 //	err := phpserialize.Unmarshal(input, &result)
 //
 //	if expectedError == nil {
-//		Expect(err).ToNot(HaveOccurred())
-//		Expect(result).To(Equal(output))
+//		expectErrorToNotHaveOccurred(t, err)
+//		if result != test.output {
+//						t.Errorf("Expected '%v', got '%v'", result, test.output)
+//					}
 //	} else {
-//		Expect(err).To(HaveOccurred())
-//		Expect(err.Error()).To(Equal(expectedError.Error()))
+//		expectErrorToNotHaveOccurred(t, err)
+//		expectErrorToEqual(t, err, test.expectedError)
 //	}
 //}
 //
@@ -183,11 +220,13 @@ import (
 //	err := phpserialize.Unmarshal(input, &result)
 //
 //	if expectedError == nil {
-//		Expect(err).ToNot(HaveOccurred())
-//		Expect(result).To(Equal(output))
+//		expectErrorToNotHaveOccurred(t, err)
+//		if result != test.output {
+//						t.Errorf("Expected '%v', got '%v'", result, test.output)
+//					}
 //	} else {
-//		Expect(err).To(HaveOccurred())
-//		Expect(err.Error()).To(Equal(expectedError.Error()))
+//		expectErrorToNotHaveOccurred(t, err)
+//		expectErrorToEqual(t, err, test.expectedError)
 //	}
 //}
 //
@@ -196,7 +235,7 @@ import (
 //	err := phpserialize.Unmarshal(input, &result)
 //
 //	if expectedError == nil {
-//		Expect(err).ToNot(HaveOccurred())
+//		expectErrorToNotHaveOccurred(t, err)
 //		Expect(len(result)).To(Equal(len(output)))
 //		for k, _ := range result {
 //			// Ginkgo has a safety feature when comparing two nil
@@ -207,8 +246,8 @@ import (
 //			}
 //		}
 //	} else {
-//		Expect(err).To(HaveOccurred())
-//		Expect(err.Error()).To(Equal(expectedError.Error()))
+//		expectErrorToNotHaveOccurred(t, err)
+//		expectErrorToEqual(t, err, test.expectedError)
 //	}
 //}
 //
@@ -217,11 +256,11 @@ import (
 //	err := phpserialize.Unmarshal(input, &result)
 //
 //	if expectedError == nil {
-//		Expect(err).ToNot(HaveOccurred())
+//		expectErrorToNotHaveOccurred(t, err)
 //		Expect(reflect.DeepEqual(result, output)).To(BeTrue())
 //	} else {
-//		Expect(err).To(HaveOccurred())
-//		Expect(err.Error()).To(Equal(expectedError.Error()))
+//		expectErrorToNotHaveOccurred(t, err)
+//		expectErrorToEqual(t, err, test.expectedError)
 //	}
 //}
 
@@ -267,15 +306,6 @@ func TestUnmarshalWithBooleanTrue(t *testing.T) {
 //
 //var _ = Describe("phpserialize", func() {
 //	Describe("Unmarshal - unserialize()", func() {
-//		DescribeTable("decode bool",
-//			decodeBool,
-//
-//			Entry("true", []byte("b:1;"), true, nil),
-//			Entry("false", []byte("b:0;"), false, nil),
-//
-//			Entry("not a boolean", []byte("N;"), true, errors.New("not a boolean")),
-//		)
-//
 //		DescribeTable("decode int",
 //			decodeInt,
 //
@@ -369,7 +399,7 @@ func TestUnmarshalWithBooleanTrue(t *testing.T) {
 //				data := "O:7:\"struct1\":3:{s:3:\"foo\";i:10;s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:1.23;}s:3:\"baz\";s:3:\"yay\";}"
 //				var result struct1
 //				err := phpserialize.Unmarshal([]byte(data), &result)
-//				Expect(err).ToNot(HaveOccurred())
+//				expectErrorToNotHaveOccurred(t, err)
 //
 //				Expect(result.Foo).To(Equal(10))
 //				Expect(result.Bar.Qux).To(Equal(1.23))

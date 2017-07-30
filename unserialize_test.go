@@ -350,18 +350,45 @@ func TestUnmarshalArray(t *testing.T) {
 	}
 }
 
-//func decodeAssociativeArray(input []byte, output map[interface{}]interface{}, expectedError error) {
-//	result := make(map[interface{}]interface{})
-//	err := phpserialize.Unmarshal(test.input, &result)
-//
-//	if test.expectedError == nil {
-//		expectErrorToNotHaveOccurred(t, err)
-//		Expect(reflect.DeepEqual(result, output)).To(BeTrue())
-//	} else {
-//		expectErrorToNotHaveOccurred(t, err)
-//		expectErrorToEqual(t, err, test.expectedError)
-//	}
-//}
+func TestUnmarshalAssociativeArray(t *testing.T) {
+	tests := map[string]struct {
+		input         []byte
+		output        map[interface{}]interface{}
+		expectedError error
+	}{
+		"map[interface{}]interface{}: {'foo': 10, 'bar': 20}": {
+			[]byte("a:2:{s:3:\"bar\";i:20;s:3:\"foo\";i:10;}"),
+			map[interface{}]interface{}{"foo": int64(10), "bar": int64(20)},
+			nil,
+		},
+		"map[interface{}]interface{}: {1: 10, 2: 'foo'}": {
+			[]byte("a:2:{i:1;i:10;i:2;s:3:\"foo\";}"),
+			map[interface{}]interface{}{int64(1): int64(10), int64(2): "foo"},
+			nil,
+		},
+		"not an array": {
+			[]byte("N;"),
+			map[interface{}]interface{}{},
+			errors.New("not an array"),
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			result := make(map[interface{}]interface{})
+			err := phpserialize.Unmarshal(test.input, &result)
+
+			if test.expectedError == nil {
+				expectErrorToNotHaveOccurred(t, err)
+				if !reflect.DeepEqual(result, test.output) {
+					t.Errorf("Expected %v, got %v", result, test.output)
+				}
+			} else {
+				expectErrorToEqual(t, err, test.expectedError)
+			}
+		})
+	}
+}
 
 var inputNull = []byte("N;")
 var inputBoolFalse = []byte("b:0;")
@@ -405,23 +432,6 @@ func TestUnmarshalWithBooleanTrue(t *testing.T) {
 //
 //var _ = Describe("phpserialize", func() {
 //	Describe("Unmarshal - unserialize()", func() {
-//		DescribeTable("decode associative array (map)",
-//			decodeAssociativeArray,
-//
-//			{"map[interface{}]interface{}: {'foo': 10, 'bar': 20}",
-//				[]byte("a:2:{s:3:\"bar\";i:20;s:3:\"foo\";i:10;}"),
-//				map[interface{}]interface{}{"foo": int64(10), "bar": int64(20)},
-//				nil),
-//			{"map[interface{}]interface{}: {1: 10, 2: 'foo'}",
-//				[]byte("a:2:{i:1;i:10;i:2;s:3:\"foo\";}"),
-//				map[interface{}]interface{}{int64(1): int64(10), int64(2): "foo"},
-//				nil),
-//
-//			{"not an array", []byte("N;"),
-//				map[interface{}]interface{}{},
-//				errors.New("not an array")),
-//		)
-//
 //		Describe("decode object", func() {
 //			It("struct1{Foo int, Bar Struct2{Qux float64}, hidden bool}", func() {
 //				data := "O:7:\"struct1\":3:{s:3:\"foo\";i:10;s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:1.23;}s:3:\"baz\";s:3:\"yay\";}"

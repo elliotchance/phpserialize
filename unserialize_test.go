@@ -217,21 +217,39 @@ func TestUnmarshalFloat(t *testing.T) {
 	}
 }
 
-//func decodeString(input []byte, output string, expectedError error) {
-//	var result string
-//	err := phpserialize.Unmarshal(test.input, &result)
-//
-//	if test.expectedError == nil {
-//		expectErrorToNotHaveOccurred(t, err)
-//		if result != test.output {
-//						t.Errorf("Expected '%v', got '%v'", result, test.output)
-//					}
-//	} else {
-//		expectErrorToNotHaveOccurred(t, err)
-//		expectErrorToEqual(t, err, test.expectedError)
-//	}
-//}
-//
+func TestUnmarshalString(t *testing.T) {
+	tests := map[string]struct {
+		input         []byte
+		output        string
+		expectedError error
+	}{
+		"''":            {[]byte("s:0:\"\";"), "", nil},
+		"'Hello world'": {[]byte("s:11:\"Hello world\";"), "Hello world", nil},
+		"'Björk Guðmundsdóttir'": {
+			[]byte("s:23:\"Bj\\xc3\\xb6rk Gu\\xc3\\xb0mundsd\\xc3\\xb3ttir\";"),
+			"Björk Guðmundsdóttir",
+			nil,
+		},
+		"not a string": {[]byte("N;"), "", errors.New("not a string")},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			var result string
+			err := phpserialize.Unmarshal(test.input, &result)
+
+			if test.expectedError == nil {
+				expectErrorToNotHaveOccurred(t, err)
+				if result != test.output {
+					t.Errorf("Expected '%v', got '%v'", result, test.output)
+				}
+			} else {
+				expectErrorToEqual(t, err, test.expectedError)
+			}
+		})
+	}
+}
+
 //func decodeBinary(input []byte, output []byte, expectedError error) {
 //	var result []byte
 //	err := phpserialize.Unmarshal(test.input, &result)
@@ -323,19 +341,6 @@ func TestUnmarshalWithBooleanTrue(t *testing.T) {
 //
 //var _ = Describe("phpserialize", func() {
 //	Describe("Unmarshal - unserialize()", func() {
-//		DescribeTable("decode string",
-//			decodeString,
-//
-//			Entry("''", []byte("s:0:\"\";"), "", nil),
-//			Entry("'Hello world'", []byte("s:11:\"Hello world\";"),
-//				"Hello world", nil),
-//			Entry("'Björk Guðmundsdóttir'",
-//				[]byte("s:23:\"Bj\\xc3\\xb6rk Gu\\xc3\\xb0mundsd\\xc3\\xb3ttir\";"),
-//				"Björk Guðmundsdóttir", nil),
-//
-//			Entry("not a string", []byte("N;"), "", errors.New("not a string")),
-//		)
-//
 //		DescribeTable("decode binary",
 //			decodeBinary,
 //

@@ -170,41 +170,58 @@ func TestUnmarshalInt(t *testing.T) {
 	}
 }
 
-//func decodeFloat(input []byte, output float64, expectedError error) {
-//	{
-//		var result float32
-//		err := phpserialize.Unmarshal(input, &result)
-//
-//		if expectedError == nil {
-//			expectErrorToNotHaveOccurred(t, err)
-//			Expect(result).To(Equal(float32(output)))
-//		} else {
-//			expectErrorToNotHaveOccurred(t, err)
-//			expectErrorToEqual(t, err, test.expectedError)
-//		}
-//	}
-//
-//	{
-//		var result float64
-//		err := phpserialize.Unmarshal(input, &result)
-//
-//		if expectedError == nil {
-//			expectErrorToNotHaveOccurred(t, err)
-//			if result != test.output {
-//						t.Errorf("Expected '%v', got '%v'", result, test.output)
-//					}
-//		} else {
-//			expectErrorToNotHaveOccurred(t, err)
-//			expectErrorToEqual(t, err, test.expectedError)
-//		}
-//	}
-//}
-//
+func TestUnmarshalFloat(t *testing.T) {
+	tests := map[string]struct {
+		input         []byte
+		output        float64
+		expectedError error
+	}{
+		"3.2":         {[]byte("d:3.2;"), 3.2, nil},
+		"10.0":        {[]byte("d:10;"), 10.0, nil},
+		"123.456789":  {[]byte("d:123.456789;"), 123.456789, nil},
+		"1.23e9":      {[]byte("d:1230000000;"), 1.23e9, nil},
+		"-17.23":      {[]byte("d:3.2;"), 3.2, nil},
+		"not a float": {[]byte("N;"), 0.0, errors.New("not a float")},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			t.Run("float32", func(t *testing.T) {
+				var result float32
+				err := phpserialize.Unmarshal(test.input, &result)
+
+				if test.expectedError == nil {
+					expectErrorToNotHaveOccurred(t, err)
+					if result != float32(test.output) {
+						t.Errorf("Expected '%v', got '%v'", result, test.output)
+					}
+				} else {
+					expectErrorToEqual(t, err, test.expectedError)
+				}
+			})
+
+			t.Run("float64", func(t *testing.T) {
+				var result float64
+				err := phpserialize.Unmarshal(test.input, &result)
+
+				if test.expectedError == nil {
+					expectErrorToNotHaveOccurred(t, err)
+					if result != test.output {
+						t.Errorf("Expected '%v', got '%v'", result, test.output)
+					}
+				} else {
+					expectErrorToEqual(t, err, test.expectedError)
+				}
+			})
+		})
+	}
+}
+
 //func decodeString(input []byte, output string, expectedError error) {
 //	var result string
-//	err := phpserialize.Unmarshal(input, &result)
+//	err := phpserialize.Unmarshal(test.input, &result)
 //
-//	if expectedError == nil {
+//	if test.expectedError == nil {
 //		expectErrorToNotHaveOccurred(t, err)
 //		if result != test.output {
 //						t.Errorf("Expected '%v', got '%v'", result, test.output)
@@ -217,9 +234,9 @@ func TestUnmarshalInt(t *testing.T) {
 //
 //func decodeBinary(input []byte, output []byte, expectedError error) {
 //	var result []byte
-//	err := phpserialize.Unmarshal(input, &result)
+//	err := phpserialize.Unmarshal(test.input, &result)
 //
-//	if expectedError == nil {
+//	if test.expectedError == nil {
 //		expectErrorToNotHaveOccurred(t, err)
 //		if result != test.output {
 //						t.Errorf("Expected '%v', got '%v'", result, test.output)
@@ -232,9 +249,9 @@ func TestUnmarshalInt(t *testing.T) {
 //
 //func decodeArray(input []byte, output []interface{}, expectedError error) {
 //	var result []interface{}
-//	err := phpserialize.Unmarshal(input, &result)
+//	err := phpserialize.Unmarshal(test.input, &result)
 //
-//	if expectedError == nil {
+//	if test.expectedError == nil {
 //		expectErrorToNotHaveOccurred(t, err)
 //		Expect(len(result)).To(Equal(len(output)))
 //		for k, _ := range result {
@@ -253,9 +270,9 @@ func TestUnmarshalInt(t *testing.T) {
 //
 //func decodeAssociativeArray(input []byte, output map[interface{}]interface{}, expectedError error) {
 //	result := make(map[interface{}]interface{})
-//	err := phpserialize.Unmarshal(input, &result)
+//	err := phpserialize.Unmarshal(test.input, &result)
 //
-//	if expectedError == nil {
+//	if test.expectedError == nil {
 //		expectErrorToNotHaveOccurred(t, err)
 //		Expect(reflect.DeepEqual(result, output)).To(BeTrue())
 //	} else {
@@ -306,29 +323,6 @@ func TestUnmarshalWithBooleanTrue(t *testing.T) {
 //
 //var _ = Describe("phpserialize", func() {
 //	Describe("Unmarshal - unserialize()", func() {
-//		DescribeTable("decode int",
-//			decodeInt,
-//
-//			Entry("0", []byte("i:0;"), 0, nil),
-//			Entry("5", []byte("i:5;"), 5, nil),
-//			Entry("-8", []byte("i:-8;"), -8, nil),
-//			Entry("1000000", []byte("i:1000000;"), 1000000, nil),
-//
-//			Entry("not an integer", []byte("N;"), 0, errors.New("not an integer")),
-//		)
-//
-//		DescribeTable("decode float",
-//			decodeFloat,
-//
-//			Entry("3.2", []byte("d:3.2;"), 3.2, nil),
-//			Entry("10.0", []byte("d:10;"), 10.0, nil),
-//			Entry("123.456789", []byte("d:123.456789;"), 123.456789, nil),
-//			Entry("1.23e9", []byte("d:1230000000;"), 1.23e9, nil),
-//			Entry("-17.23", []byte("d:3.2;"), 3.2, nil),
-//
-//			Entry("not a float", []byte("N;"), 0.0, errors.New("not a float")),
-//		)
-//
 //		DescribeTable("decode string",
 //			decodeString,
 //

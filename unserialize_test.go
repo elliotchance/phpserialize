@@ -1,20 +1,10 @@
 package phpserialize_test
 
-//func decodeNull(input []byte, expectedError error) {
-//	var result interface{}
-//	err := phpserialize.Unmarshal(input, &result)
-//
-//	Expect(result).To(BeNil())
-//
-//	err = phpserialize.UnmarshalNil(input)
-//	if expectedError == nil {
-//		Expect(err).ToNot(HaveOccurred())
-//	} else {
-//		Expect(err).To(HaveOccurred())
-//		Expect(err.Error()).To(Equal(err.Error()))
-//	}
-//}
-//
+import (
+	"github.com/elliotchance/phpserialize"
+	"testing"
+)
+
 //func decodeBool(input []byte, output bool, expectedError error) {
 //	var result bool
 //	err := phpserialize.Unmarshal(input, &result)
@@ -234,17 +224,49 @@ package phpserialize_test
 //		Expect(err.Error()).To(Equal(expectedError.Error()))
 //	}
 //}
+
+var inputNull = []byte("N;")
+var inputBoolFalse = []byte("b:0;")
+var inputBoolTrue = []byte("b:1;")
+
+func TestUnmarshalWithNull(t *testing.T) {
+	result := interface{}(nil)
+	err := phpserialize.Unmarshal(inputNull, &result)
+
+	if err == nil {
+		t.Errorf("expected error")
+	}
+}
+
+func TestUnmarshalNilWithNull(t *testing.T) {
+	err := phpserialize.UnmarshalNil(inputNull)
+	if err != nil {
+		t.Error(err)
+	}
+}
+
+func TestBadUnmarshalNilWithNull(t *testing.T) {
+	err := phpserialize.UnmarshalNil(inputBoolFalse)
+	if err == nil {
+		t.Errorf("expected error")
+	}
+}
+
+func TestUnmarshalWithBooleanTrue(t *testing.T) {
+	var result bool
+	err := phpserialize.Unmarshal(inputBoolTrue, &result)
+
+	if result != true {
+		t.Errorf("expected true")
+	}
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 //
 //var _ = Describe("phpserialize", func() {
 //	Describe("Unmarshal - unserialize()", func() {
-//		DescribeTable("decode null",
-//			decodeNull,
-//
-//			Entry("null", []byte("N;"), nil),
-//
-//			Entry("not null", []byte("b:0;"), errors.New("not null")),
-//		)
-//
 //		DescribeTable("decode bool",
 //			decodeBool,
 //

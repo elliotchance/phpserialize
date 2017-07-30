@@ -159,6 +159,7 @@ func UnmarshalObject(data []byte, v interface{}) error {
 
 func Unmarshal(data []byte, v interface{}) error {
 	value := reflect.ValueOf(v).Elem()
+
 	switch value.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32,
 		reflect.Int64:

@@ -65,8 +65,12 @@ var marshalTests = map[string]marshalTest{
 	"float32: 4.8": {float32(4.8), []byte("d:4.8;"), nil},
 
 	// encode string
-	"string: ''":            {"", []byte("s:0:\"\";"), nil},
-	"string: 'Hello world'": {"Hello world", []byte("s:11:\"Hello world\";"), nil},
+	"string: ''": {"", []byte("s:0:\"\";"), nil},
+	"string: 'Hello world'": {
+		"Hello world",
+		[]byte("s:11:\"Hello world\";"),
+		nil,
+	},
 	"string: 'Björk Guðmundsdóttir'": {
 		"Björk Guðmundsdóttir",
 		[]byte("s:23:\"Bj\\xc3\\xb6rk Gu\\xc3\\xb0mundsd\\xc3\\xb3ttir\";"),
@@ -81,9 +85,21 @@ var marshalTests = map[string]marshalTest{
 	},
 
 	// encode array (slice)
-	"[]float64: [7.89]":           {[]float64{7.89}, []byte("a:1:{i:0;d:7.89;}"), nil},
-	"[]int: [7, 8, 9]":            {[]int{7, 8, 9}, []byte("a:3:{i:0;i:7;i:1;i:8;i:2;i:9;}"), nil},
-	"[]interface{}: [7.2, 'foo']": {[]interface{}{7.2, "foo"}, []byte("a:2:{i:0;d:7.2;i:1;s:3:\"foo\";}"), nil},
+	"[]float64: [7.89]": {
+		[]float64{7.89},
+		[]byte("a:1:{i:0;d:7.89;}"),
+		nil,
+	},
+	"[]int: [7, 8, 9]": {
+		[]int{7, 8, 9},
+		[]byte("a:3:{i:0;i:7;i:1;i:8;i:2;i:9;}"),
+		nil,
+	},
+	"[]interface{}: [7.2, 'foo']": {
+		[]interface{}{7.2, "foo"},
+		[]byte("a:2:{i:0;d:7.2;i:1;s:3:\"foo\";}"),
+		nil,
+	},
 
 	// encode associative array (map)
 	"map[string]int: {'foo': 10, 'bar': 20}": {
@@ -135,14 +151,16 @@ func TestMarshal(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(result, test.output) {
-				t.Errorf("Expected '%v', got '%v'", string(result), string(test.output))
+				t.Errorf("Expected '%v', got '%v'", string(result),
+					string(test.output))
 			}
 		})
 	}
 }
 
 func TestMarshalFail(t *testing.T) {
-	result, err := phpserialize.Marshal(uintptr(13), phpserialize.DefaultMarshalOptions())
+	options := phpserialize.DefaultMarshalOptions()
+	result, err := phpserialize.Marshal(uintptr(13), options)
 	if err == nil {
 		t.Error("expected error to occur")
 	}

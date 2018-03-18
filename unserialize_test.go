@@ -366,10 +366,10 @@ func TestUnmarshalAssociativeArray(t *testing.T) {
 			map[interface{}]interface{}{int64(1): int64(10), int64(2): "foo"},
 			nil,
 		},
-		"not an array": {
+		"not an array or object": {
 			[]byte("N;"),
 			map[interface{}]interface{}{},
-			errors.New("not an array"),
+			errors.New("not an array or object"),
 		},
 	}
 
@@ -445,5 +445,24 @@ func TestUnmarshalObject(t *testing.T) {
 
 	if result.Baz != "yay" {
 		t.Errorf("Expected %v, got %v", "yay", result.Baz)
+	}
+}
+
+func TestUnmarshalObjectIntoMap(t *testing.T) {
+	data := "O:7:\"struct1\":3:{s:3:\"foo\";i:10;s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:1.23;}s:3:\"baz\";s:3:\"yay\";}"
+	var result map[interface{}]interface{}
+	err := phpserialize.Unmarshal([]byte(data), &result)
+	expectErrorToNotHaveOccurred(t, err)
+
+	expected := map[interface{}]interface{}{
+		"baz": "yay",
+		"foo": int64(10),
+		"bar": map[interface{}]interface{}{
+			"qux": 1.23,
+		},
+	}
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Expected:\n  %#+v\nGot:\n  %#+v", expected, result)
 	}
 }

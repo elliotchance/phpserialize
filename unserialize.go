@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-type dummyObject struct{ Qux float64 }
-
 // findByte will return the first position at or after offset of the specified
 // byte. -1 is returned if the byte is not found.
 func findByte(data []byte, lookingFor byte, offset int) int {
@@ -121,8 +119,16 @@ func UnmarshalArray(data []byte) ([]interface{}, error) {
 }
 
 func UnmarshalAssociativeArray(data []byte) (map[interface{}]interface{}, error) {
+	// We may be unmarshalling an object into a map.
+	if checkType(data, 'O', 0) {
+		result, _, err := consumeObjectAsMap(data, 0)
+
+		return result, err
+	}
+
 	if !checkType(data, 'a', 0) {
-		return map[interface{}]interface{}{}, errors.New("not an array")
+		return map[interface{}]interface{}{},
+			errors.New("not an array or object")
 	}
 
 	rawLength, offset := consumeStringUntilByte(data, ':', 2)

@@ -11,7 +11,17 @@ func StringifyKeys(m map[interface{}]interface{}) (out map[string]interface{}) {
 	out = map[string]interface{}{}
 
 	for k, v := range m {
-		if x, ok := v.(map[interface{}]interface{}); ok {
+		switch x := v.(type) {
+		case []interface{}:
+			newSlice := []interface{}{}
+			for _, sliceEntry := range x {
+				if subMap, ok := sliceEntry.(map[interface{}]interface{}); ok {
+					sliceEntry = StringifyKeys(subMap)
+				}
+				newSlice = append(newSlice, sliceEntry)
+			}
+			v = newSlice
+		case map[interface{}]interface{}:
 			v = StringifyKeys(x)
 		}
 

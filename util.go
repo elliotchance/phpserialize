@@ -11,6 +11,10 @@ func StringifyKeys(m map[interface{}]interface{}) (out map[string]interface{}) {
 	out = map[string]interface{}{}
 
 	for k, v := range m {
+		if x, ok := v.(map[interface{}]interface{}); ok {
+			v = StringifyKeys(x)
+		}
+
 		out[k.(string)] = v
 	}
 

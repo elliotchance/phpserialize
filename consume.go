@@ -250,6 +250,8 @@ func consumeNext(data []byte, offset int) (interface{}, int, error) {
 		return consumeString(data, offset)
 	case 'N':
 		return consumeNil(data, offset)
+	case 'O':
+		return consumeObjectAsMap(data, offset)
 	}
 
 	return nil, -1, errors.New("can not consume type: " +

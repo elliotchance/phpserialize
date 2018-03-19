@@ -7,6 +7,12 @@ package phpserialize
 // serialise() permits keys of associative arrays to be non-string. However, in
 // reality this is rarely the case and so strings for keys are much more
 // compatible with external code.
-func StringifyKeys(m map[interface{}]interface{}) map[string]interface{} {
-	return map[string]interface{}{}
+func StringifyKeys(m map[interface{}]interface{}) (out map[string]interface{}) {
+	out = map[string]interface{}{}
+
+	for k, v := range m {
+		out[k.(string)] = v
+	}
+
+	return
 }

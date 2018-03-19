@@ -466,3 +466,20 @@ func TestUnmarshalObjectIntoMap(t *testing.T) {
 		t.Errorf("Expected:\n  %#+v\nGot:\n  %#+v", expected, result)
 	}
 }
+
+func TestUnmarshalObjectIntoMapContainingArray(t *testing.T) {
+	data := "O:7:\"struct1\":3:{s:3:\"foo\";i:10;s:3:\"bar\";a:3:{i:0;i:7;i:1;i:8;i:2;i:9;}s:3:\"baz\";s:3:\"yay\";}"
+	var result map[interface{}]interface{}
+	err := phpserialize.Unmarshal([]byte(data), &result)
+	expectErrorToNotHaveOccurred(t, err)
+
+	expected := map[interface{}]interface{}{
+		"baz": "yay",
+		"foo": int64(10),
+		"bar": []interface{}{int64(7), int64(8), int64(9)},
+	}
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Expected:\n  %#+v\nGot:\n  %#+v", expected, result)
+	}
+}

@@ -238,6 +238,8 @@ func consumeNext(data []byte, offset int) (interface{}, int, error) {
 	}
 
 	switch data[offset] {
+	case 'a':
+		return consumeArray(data, offset)
 	case 'b':
 		return consumeBool(data, offset)
 	case 'd':
@@ -252,4 +254,46 @@ func consumeNext(data []byte, offset int) (interface{}, int, error) {
 
 	return nil, -1, errors.New("can not consume type: " +
 		string(data[offset:]))
+}
+
+func consumeArray(data []byte, offset int) ([]interface{}, int, error) {
+	if !checkType(data, 'a', offset) {
+		return []interface{}{}, -1, errors.New("not an array")
+	}
+
+	rawLength, offset := consumeStringUntilByte(data, ':', offset+2)
+	length, err := strconv.Atoi(rawLength)
+	if err != nil {
+		return []interface{}{}, -1, err
+	}
+
+	// Skip over the ":{"
+	offset += 2
+
+	result := make([]interface{}, length)
+	for i := 0; i < length; i++ {
+		// Even non-associative arrays (arrays that are zero-indexed)
+		// still have their keys serialized. We need to read these
+		// indexes to make sure we are actually decoding a slice and not
+		// a map.
+		var index int64
+		index, offset, err = consumeInt(data, offset)
+		if err != nil {
+			return []interface{}{}, -1, err
+		}
+
+		if index != int64(i) {
+			return []interface{}{}, -1,
+				errors.New("cannot decode map as slice")
+		}
+
+		// Now we consume the value
+		result[i], offset, err = consumeNext(data, offset)
+		if err != nil {
+			return []interface{}{}, -1, err
+		}
+	}
+
+	// The +1 is for the final '}'
+	return result, offset+1, nil
 }

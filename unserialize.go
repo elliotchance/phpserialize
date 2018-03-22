@@ -8,8 +8,6 @@ import (
 	"strings"
 )
 
-type dummyObject struct{ Qux float64 }
-
 // findByte will return the first position at or after offset of the specified
 // byte. -1 is returned if the byte is not found.
 func findByte(data []byte, lookingFor byte, offset int) int {
@@ -80,49 +78,22 @@ func checkType(data []byte, typeCharacter byte, offset int) bool {
 }
 
 func UnmarshalArray(data []byte) ([]interface{}, error) {
-	if !checkType(data, 'a', 0) {
-		return []interface{}{}, errors.New("not an array")
-	}
+	v, _, err := consumeArray(data, 0)
 
-	rawLength, offset := consumeStringUntilByte(data, ':', 2)
-	length, err := strconv.Atoi(rawLength)
-	if err != nil {
-		return []interface{}{}, err
-	}
-
-	// Skip over the ":{"
-	offset += 2
-
-	result := make([]interface{}, length)
-	for i := 0; i < length; i++ {
-		// Even non-associative arrays (arrays that are zero-indexed)
-		// still have their keys serialized. We need to read these
-		// indexes to make sure we are actually decoding a slice and not
-		// a map.
-		var index int64
-		index, offset, err = consumeInt(data, offset)
-		if err != nil {
-			return []interface{}{}, err
-		}
-
-		if index != int64(i) {
-			return []interface{}{},
-				errors.New("cannot decode map as slice")
-		}
-
-		// Now we consume the value
-		result[i], offset, err = consumeNext(data, offset)
-		if err != nil {
-			return []interface{}{}, err
-		}
-	}
-
-	return result, nil
+	return v, err
 }
 
 func UnmarshalAssociativeArray(data []byte) (map[interface{}]interface{}, error) {
+	// We may be unmarshalling an object into a map.
+	if checkType(data, 'O', 0) {
+		result, _, err := consumeObjectAsMap(data, 0)
+
+		return result, err
+	}
+
 	if !checkType(data, 'a', 0) {
-		return map[interface{}]interface{}{}, errors.New("not an array")
+		return map[interface{}]interface{}{},
+			errors.New("not an array or object")
 	}
 
 	rawLength, offset := consumeStringUntilByte(data, ':', 2)

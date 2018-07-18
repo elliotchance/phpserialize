@@ -204,6 +204,11 @@ func MarshalStruct(input interface{}, options *MarshalOptions) ([]byte, error) {
 // Marshal is the canonical way to perform the equivalent of serialize() in PHP.
 // It can handle encoding scalar types, slices and maps.
 func Marshal(input interface{}, options *MarshalOptions) ([]byte, error) {
+	
+	if options == nil {
+		options = DefaultMarshalOptions()
+	}
+	
 	// []byte is a special case because all strings (binary and otherwise)
 	// are handled as strings in PHP.
 	if bytesToEncode, ok := input.([]byte); ok {

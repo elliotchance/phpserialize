@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 )
 
 // MarshalOptions must be provided when invoking Marshal(). Use

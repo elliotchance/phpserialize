@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 )
 
 // MarshalOptions must be provided when invoking Marshal(). Use
@@ -92,12 +91,6 @@ func MarshalFloat(value float64, bitSize int) []byte {
 //     echo serialize('Hello world');
 //     // s:11:"Hello world";
 //
-// Non ASCII characters will be escaped in the output, so the result will always
-// be an ASCII string:
-//
-//     MarshalString("Björk Guðmundsdóttir");
-//     // s:23:"Bj\xc3\xb6rk Gu\xc3\xb0mundsd\xc3\xb3ttir";
-//
 // The same result would be returned by marshalling a string value:
 //
 //     Marshal('Hello world')
@@ -105,20 +98,7 @@ func MarshalFloat(value float64, bitSize int) []byte {
 // One important distinction is that PHP stores binary data in strings. See
 // MarshalBytes for more information.
 func MarshalString(value string) []byte {
-	var buffer bytes.Buffer
-	for _, r := range value {
-		if r <= 127 {
-			buffer.WriteRune(r)
-		} else {
-			chars := make([]byte, 4)
-			for i := 0; i < utf8.EncodeRune(chars, r); i++ {
-				escapedChar := fmt.Sprintf("\\x%02x", chars[i])
-				buffer.WriteString(escapedChar)
-			}
-		}
-	}
-
-	return []byte(fmt.Sprintf("s:%d:\"%s\";", len(value), buffer.String()))
+	return []byte(fmt.Sprintf("s:%d:\"%s\";", len(value), value))
 }
 
 // MarshalBytes returns the bytes to represent a PHP serialized string value

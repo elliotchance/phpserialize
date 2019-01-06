@@ -73,7 +73,7 @@ var marshalTests = map[string]marshalTest{
 	},
 	"string: 'Björk Guðmundsdóttir'": {
 		"Björk Guðmundsdóttir",
-		[]byte("s:23:\"Bj\\xc3\\xb6rk Gu\\xc3\\xb0mundsd\\xc3\\xb3ttir\";"),
+		[]byte("s:23:\"Björk Guðmundsdóttir\";"),
 		nil,
 	},
 

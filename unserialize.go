@@ -77,8 +77,8 @@ func checkType(data []byte, typeCharacter byte, offset int) bool {
 	return len(data) > offset && data[offset] == typeCharacter
 }
 
-func UnmarshalArray(data []byte) ([]interface{}, error) {
-	v, _, err := consumeArray(data, 0)
+func UnmarshalIndexedArray(data []byte) ([]interface{}, error) {
+	v, _, err := consumeIndexedArray(data, 0)
 
 	return v, err
 }
@@ -91,36 +91,9 @@ func UnmarshalAssociativeArray(data []byte) (map[interface{}]interface{}, error)
 		return result, err
 	}
 
-	if !checkType(data, 'a', 0) {
-		return map[interface{}]interface{}{},
-			errors.New("not an array or object")
-	}
+	result, _, err := consumeAssociativeArray(data, 0)
 
-	rawLength, offset := consumeStringUntilByte(data, ':', 2)
-	length, err := strconv.Atoi(rawLength)
-	if err != nil {
-		return map[interface{}]interface{}{}, err
-	}
-
-	// Skip over the ":{"
-	offset += 2
-
-	result := map[interface{}]interface{}{}
-	for i := 0; i < length; i++ {
-		var key interface{}
-
-		key, offset, err = consumeNext(data, offset)
-		if err != nil {
-			return map[interface{}]interface{}{}, err
-		}
-
-		result[key], offset, err = consumeNext(data, offset)
-		if err != nil {
-			return map[interface{}]interface{}{}, err
-		}
-	}
-
-	return result, nil
+	return result, err
 }
 
 func UnmarshalObject(data []byte, v interface{}) error {
@@ -187,7 +160,7 @@ func Unmarshal(data []byte, v interface{}) error {
 		}
 
 		// Otherwise this must be a slice (array)
-		v, err := UnmarshalArray(data)
+		v, err := UnmarshalIndexedArray(data)
 		if err != nil {
 			return err
 		}

@@ -523,3 +523,21 @@ func TestUnmarshalArrayThatContainsInteger(t *testing.T) {
 		t.Errorf("Expected:\n  %#+v\nGot:\n  %#+v", expected, result)
 	}
 }
+
+// https://github.com/elliotchance/phpserialize/issues/1
+func TestUnmarshalMultibyte(t *testing.T) {
+	data := `a:3:{i:0;a:2:{i:0;s:6:"白色";i:1;s:6:"黑色";}i:1;a:3:{i:0;s:3:"大";i:1;s:3:"中";i:2;s:3:"小";}i:2;a:2:{i:0;s:3:"女";i:1;s:3:"男";}}`
+	var result map[interface{}]interface{}
+	err := phpserialize.Unmarshal([]byte(data), &result)
+	expectErrorToNotHaveOccurred(t, err)
+
+	expected := map[interface{}]interface{}{
+		int64(0): []interface{}{"白色", "黑色"},
+		int64(1): []interface{}{"大", "中", "小"},
+		int64(2): []interface{}{"女", "男"},
+	}
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Expected:\n  %#+v\nGot:\n  %#+v", expected, result)
+	}
+}

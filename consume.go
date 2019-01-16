@@ -239,7 +239,7 @@ func consumeNext(data []byte, offset int) (interface{}, int, error) {
 
 	switch data[offset] {
 	case 'a':
-		return consumeArray(data, offset)
+		return consumeIndexedOrAssociativeArray(data, offset)
 	case 'b':
 		return consumeBool(data, offset)
 	case 'd':
@@ -258,7 +258,57 @@ func consumeNext(data []byte, offset int) (interface{}, int, error) {
 		string(data[offset:]))
 }
 
-func consumeArray(data []byte, offset int) ([]interface{}, int, error) {
+func consumeIndexedOrAssociativeArray(data []byte, offset int) (interface{}, int, error) {
+	// Sometimes we don't know if the array is going to be indexed or
+	// associative until we have already started to consume it.
+	originalOffset := offset
+
+	// Try to consume it as an indexed array first.
+	arr, offset, err := consumeIndexedArray(data, originalOffset)
+	if err == nil {
+		return arr, offset, err
+	}
+
+	// Fallback to consuming an associative array
+	return consumeAssociativeArray(data, originalOffset)
+}
+
+func consumeAssociativeArray(data []byte, offset int) (map[interface{}]interface{}, int, error) {
+	if !checkType(data, 'a', offset) {
+		return map[interface{}]interface{}{}, -1, errors.New("not an array")
+	}
+
+	// Skip over the "a:"
+	offset += 2
+
+	rawLength, offset := consumeStringUntilByte(data, ':', offset)
+	length, err := strconv.Atoi(rawLength)
+	if err != nil {
+		return map[interface{}]interface{}{}, -1, err
+	}
+
+	// Skip over the ":{"
+	offset += 2
+
+	result := map[interface{}]interface{}{}
+	for i := 0; i < length; i++ {
+		var key interface{}
+
+		key, offset, err = consumeNext(data, offset)
+		if err != nil {
+			return map[interface{}]interface{}{}, -1, err
+		}
+
+		result[key], offset, err = consumeNext(data, offset)
+		if err != nil {
+			return map[interface{}]interface{}{}, -1, err
+		}
+	}
+
+	return result, offset, nil
+}
+
+func consumeIndexedArray(data []byte, offset int) ([]interface{}, int, error) {
 	if !checkType(data, 'a', offset) {
 		return []interface{}{}, -1, errors.New("not an array")
 	}

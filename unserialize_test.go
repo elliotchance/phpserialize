@@ -366,10 +366,10 @@ func TestUnmarshalAssociativeArray(t *testing.T) {
 			map[interface{}]interface{}{int64(1): int64(10), int64(2): "foo"},
 			nil,
 		},
-		"not an array or object": {
+		"not an array": {
 			[]byte("N;"),
 			map[interface{}]interface{}{},
-			errors.New("not an array or object"),
+			errors.New("not an array"),
 		},
 	}
 
@@ -497,6 +497,26 @@ func TestUnmarshalArrayThatContainsObject(t *testing.T) {
 		},
 		int64(8),
 		int64(9),
+	}
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Expected:\n  %#+v\nGot:\n  %#+v", expected, result)
+	}
+}
+
+// https://github.com/elliotchance/phpserialize/issues/7
+func TestUnmarshalArrayThatContainsInteger(t *testing.T) {
+	data := `a:3:{s:4:"name";s:2:"tw";s:3:"age";i:123;s:4:"wife";a:1:{s:1:"x";s:1:"y";}}`
+	var result map[interface{}]interface{}
+	err := phpserialize.Unmarshal([]byte(data), &result)
+	expectErrorToNotHaveOccurred(t, err)
+
+	expected := map[interface{}]interface{}{
+		"wife": map[interface{}]interface{}{
+			"x": "y",
+		},
+		"name": "tw",
+		"age":  int64(123),
 	}
 
 	if !reflect.DeepEqual(result, expected) {

@@ -227,7 +227,7 @@ func TestUnmarshalString(t *testing.T) {
 		"''":            {[]byte("s:0:\"\";"), "", nil},
 		"'Hello world'": {[]byte("s:11:\"Hello world\";"), "Hello world", nil},
 		"'Björk Guðmundsdóttir'": {
-			[]byte("s:23:\"Bj\\xc3\\xb6rk Gu\\xc3\\xb0mundsd\\xc3\\xb3ttir\";"),
+			[]byte(`s:23:"Björk Guðmundsdóttir";`),
 			"Björk Guðmundsdóttir",
 			nil,
 		},
@@ -242,7 +242,7 @@ func TestUnmarshalString(t *testing.T) {
 			if test.expectedError == nil {
 				expectErrorToNotHaveOccurred(t, err)
 				if result != test.output {
-					t.Errorf("Expected '%v', got '%v'", result, test.output)
+					t.Errorf("Expected '%v', got '%v'", test.output, result)
 				}
 			} else {
 				expectErrorToEqual(t, err, test.expectedError)
@@ -257,8 +257,8 @@ func TestUnmarshalBinary(t *testing.T) {
 		output        []byte
 		expectedError error
 	}{
-		"[]byte: \\001\\002\\003": {
-			[]byte("s:3:\"\\x01\\x02\\x03\";"),
+		"[]byte: \\x01\\x02\\x03": {
+			[]byte("s:3:\"\x01\x02\x03\";"),
 			[]byte{1, 2, 3},
 			nil,
 		},
@@ -539,5 +539,45 @@ func TestUnmarshalMultibyte(t *testing.T) {
 
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Expected:\n  %#+v\nGot:\n  %#+v", expected, result)
+	}
+}
+
+var escapeTests = map[string]struct{
+	Unserialized, Serialized string
+}{
+	"SingleQuote": {
+		"foo'bar", `s:8:"foo\'bar";`,
+	},
+	"DoubleQuote": {
+		"foo\"bar", `s:7:"foo"bar";`,
+	},
+	"Backslash": {
+		"foo\\bar", `s:7:"foo\bar";`,
+	},
+	"Dollar": {
+		"foo$bar", `s:7:"foo$bar";`,
+	},
+	"NewLine": {
+		"foo\nbar", "s:7:\"foo\nbar\";",
+	},
+	"HorizontalTab": {
+		"foo\tbar", "s:7:\"foo\tbar\";",
+	},
+	"CarriageReturn": {
+		"foo\rbar", "s:7:\"foo\rbar\";",
+	},
+}
+
+func TestUnmarshalEscape(t *testing.T) {
+	for testName, test := range escapeTests {
+		t.Run(testName, func(t *testing.T) {
+			var result string
+			err := phpserialize.Unmarshal([]byte(test.Serialized), &result)
+			expectErrorToNotHaveOccurred(t, err)
+
+			if test.Unserialized != result {
+				t.Errorf("Expected:\n  %#+v\nGot:\n  %#+v", test.Unserialized, result)
+			}
+		})
 	}
 }

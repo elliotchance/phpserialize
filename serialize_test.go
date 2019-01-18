@@ -171,3 +171,17 @@ func TestMarshalFail(t *testing.T) {
 		t.Error(err.Error())
 	}
 }
+
+func TestMarshalEscape(t *testing.T) {
+	for testName, test := range escapeTests {
+		t.Run(testName, func(t *testing.T) {
+			options := phpserialize.DefaultMarshalOptions()
+			result, err := phpserialize.Marshal(test.Unserialized, options)
+			expectErrorToNotHaveOccurred(t, err)
+
+			if test.Serialized != string(result) {
+				t.Errorf("Expected:\n  %#+v\nGot:\n  %#+v", test.Serialized, result)
+			}
+		})
+	}
+}

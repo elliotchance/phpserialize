@@ -98,6 +98,10 @@ func MarshalFloat(value float64, bitSize int) []byte {
 // One important distinction is that PHP stores binary data in strings. See
 // MarshalBytes for more information.
 func MarshalString(value string) []byte {
+	// As far as I can tell only the single-quote is escaped. Not even the
+	// backslash itself is escaped. Weird. See escapeTests for more information.
+	value = strings.Replace(value, "'", "\\'", -1)
+
 	return []byte(fmt.Sprintf("s:%d:\"%s\";", len(value), value))
 }
 

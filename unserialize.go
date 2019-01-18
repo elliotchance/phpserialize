@@ -26,9 +26,26 @@ func DecodePHPString(data []byte) string {
 	var buffer bytes.Buffer
 	for i := 0; i < len(data); i++ {
 		if data[i] == '\\' {
-			b, _ := strconv.ParseInt(string(data[i+2:i+4]), 16, 32)
-			buffer.WriteByte(byte(b))
-			i += 3
+			switch data[i+1] {
+			case 'x':
+				b, _ := strconv.ParseInt(string(data[i+2:i+4]), 16, 32)
+				buffer.WriteByte(byte(b))
+				i += 3
+
+			case 'n':
+				buffer.WriteByte('\n')
+				i++
+
+			case '\'':
+				buffer.WriteByte(data[i+1])
+				i++
+
+			default:
+				// It's a bit annoying but a backlash itself is not escaped. So
+				// if it was not followed by a known character we have to assume
+				// this.
+				buffer.WriteByte('\\')
+			}
 		} else {
 			buffer.WriteByte(data[i])
 		}

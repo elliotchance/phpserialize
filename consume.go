@@ -88,10 +88,10 @@ func consumeStringRealPart(data []byte, offset int) (string, int, error) {
 	// redundant.
 	offset = newOffset + 1
 
-	s := DecodePHPString(data)
+	s := DecodePHPString(data[offset:length+offset])
 
 	// The +2 is to skip over the final '";'
-	return s[offset: offset+length], offset + length + 2, nil
+	return s, offset + length + 2, nil
 }
 
 func consumeNil(data []byte, offset int) (interface{}, int, error) {

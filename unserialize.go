@@ -20,6 +20,16 @@ func findByte(data []byte, lookingFor byte, offset int) int {
 	return -1
 }
 
+func findNotByte(data []byte, lookingForNot byte, offset int) int {
+	for ; offset < len(data); offset++ {
+		if data[offset] != lookingForNot {
+			return offset
+		}
+	}
+
+	return -1
+}
+
 // DecodePHPString converts a string of ASCII bytes (like "Bj\xc3\xb6rk") back
 // into a UTF8 string ("Björk", in that case).
 func DecodePHPString(data []byte) string {

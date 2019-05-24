@@ -26,6 +26,16 @@ func consumeStringUntilByte(data []byte, lookingFor byte, offset int) (s string,
 	return
 }
 
+func consumeStringUntilNotByte(data []byte, lookingForNot byte, offset int) (s string, newOffset int) {
+	newOffset = findNotByte(data, lookingForNot, offset)
+	if newOffset < 0 {
+		return "", -1
+	}
+
+	s = string(data[offset:newOffset])
+	return
+}
+
 func consumeInt(data []byte, offset int) (int64, int, error) {
 	if !checkType(data, 'i', offset) {
 		return 0, -1, errors.New("not an integer")
@@ -305,6 +315,11 @@ func consumeAssociativeArray(data []byte, offset int) (map[interface{}]interface
 		}
 	}
 
+	// Skip }, it is necessary for nested arrays
+	if offset != -1 {
+		_, offset = consumeStringUntilNotByte(data, '}', offset)
+	}
+	
 	return result, offset, nil
 }
 

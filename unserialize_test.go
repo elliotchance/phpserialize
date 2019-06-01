@@ -2,9 +2,10 @@ package phpserialize_test
 
 import (
 	"errors"
-	"github.com/elliotchance/phpserialize"
 	"reflect"
 	"testing"
+
+	"github.com/elliotchance/phpserialize"
 )
 
 func expectErrorToNotHaveOccurred(t *testing.T, err error) {
@@ -313,6 +314,46 @@ func TestUnmarshalArray(t *testing.T) {
 			[]interface{}{true, false},
 			nil,
 		},
+		"[]interface{}: [1, 2, 'foo']": {
+			[]byte(`a:3:{i:0;i:1;i:1;i:2;i:2;s:3:"foo";}`),
+			[]interface{}{int64(1), int64(2), "foo"},
+			nil,
+		},
+		"[]interface{}: [1, 2, 'foo', '中文']": {
+			[]byte(`a:4:{i:0;i:1;i:1;i:2;i:2;s:3:"foo";i:3;s:6:"中文";}`),
+			[]interface{}{int64(1), int64(2), "foo", "中文"},
+			nil,
+		},
+		"[]interface{}: [1, 2, 'foo', '中文', ['a' => 'a']]": {
+			[]byte(`a:5:{i:0;i:1;i:1;i:2;i:2;s:3:"foo";i:3;s:6:"中文";i:4;a:1:{s:1:"a";s:1:"a";}}`),
+			[]interface{}{int64(1), int64(2), "foo", "中文", map[interface{}]interface{}{"a": "a"}},
+			nil,
+		},
+		"[]interface{}: [1, 2, 'foo', ['a' => 'a']]": {
+			[]byte(`a:4:{i:0;i:1;i:1;i:2;i:2;s:3:"foo";i:3;a:1:{s:1:"a";s:1:"a";}}`),
+			[]interface{}{int64(1), int64(2), "foo", map[interface{}]interface{}{"a": "a"}},
+			nil,
+		},
+		"[]interface{}: [1, 2, 'foo', ['a' => 'a'], ['a' => 'a']]": {
+			[]byte(`a:5:{i:0;i:1;i:1;i:2;i:2;s:3:"foo";i:3;a:1:{s:1:"a";s:1:"a";}i:4;a:1:{s:1:"a";s:1:"a";}}`),
+			[]interface{}{int64(1), int64(2), "foo", map[interface{}]interface{}{"a": "a"}, map[interface{}]interface{}{"a": "a"}},
+			nil,
+		},
+		"[]interface{}: [1, 2, 'foo', '中文', ['a' => 'a'], ['a' => 'a']]": {
+			[]byte(`a:6:{i:0;i:1;i:1;i:2;i:2;s:3:"foo";i:3;s:6:"中文";i:4;a:1:{s:1:"a";s:1:"a";}i:5;a:1:{s:1:"a";s:1:"a";}}`),
+			[]interface{}{int64(1), int64(2), "foo", "中文", map[interface{}]interface{}{"a": "a"}, map[interface{}]interface{}{"a": "a"}},
+			nil,
+		},
+		"[]interface{}: [['id'=> '1'], ['id'=> '2']]": {
+			[]byte(`a:2:{i:0;a:1:{s:2:"id";s:1:"1";}i:1;a:1:{s:2:"id";s:1:"2";}}`),
+			[]interface{}{map[interface{}]interface{}{"id": "1"}, map[interface{}]interface{}{"id": "2"}},
+			nil,
+		},
+		"[]interface{}: [['id'=> '1', 'name' => '1'], ['id'=> '2', 'name' => '2'], ['id'=> '3', 'name' => '3']]": {
+			[]byte(`a:3:{i:0;a:2:{s:2:"id";s:1:"1";s:4:"name";s:1:"1";}i:1;a:2:{s:2:"id";s:1:"2";s:4:"name";s:1:"2";}i:2;a:2:{s:2:"id";s:1:"3";s:4:"name";s:1:"3";}}`),
+			[]interface{}{map[interface{}]interface{}{"id": "1", "name": "1"}, map[interface{}]interface{}{"id": "2", "name": "2"}, map[interface{}]interface{}{"id": "3", "name": "3"}},
+			nil,
+		},
 		"cannot decode map as slice": {
 			[]byte("a:2:{i:0;b:1;i:5;b:0;}"),
 			[]interface{}{},
@@ -364,6 +405,11 @@ func TestUnmarshalAssociativeArray(t *testing.T) {
 		"map[interface{}]interface{}: {1: 10, 2: 'foo'}": {
 			[]byte("a:2:{i:1;i:10;i:2;s:3:\"foo\";}"),
 			map[interface{}]interface{}{int64(1): int64(10), int64(2): "foo"},
+			nil,
+		},
+		"map[interface{}]interface{}: {'foo': 10, 'bar': 20, 'foobar': {'foo': 10, 'bar': 20}}": {
+			[]byte(`a:3:{s:3:"foo";i:10;s:3:"bar";i:20;s:6:"foobar";a:2:{s:3:"foo";i:10;s:3:"bar";i:20;}}`),
+			map[interface{}]interface{}{"foo": int64(10), "bar": int64(20), "foobar": map[interface{}]interface{}{"foo": int64(10), "bar": int64(20)}},
 			nil,
 		},
 		"not an array": {
@@ -542,7 +588,7 @@ func TestUnmarshalMultibyte(t *testing.T) {
 	}
 }
 
-var escapeTests = map[string]struct{
+var escapeTests = map[string]struct {
 	Unserialized, Serialized string
 }{
 	"SingleQuote": {

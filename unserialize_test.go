@@ -412,6 +412,11 @@ func TestUnmarshalAssociativeArray(t *testing.T) {
 			map[interface{}]interface{}{"foo": int64(10), "bar": int64(20), "foobar": map[interface{}]interface{}{"foo": int64(10), "bar": int64(20)}},
 			nil,
 		},
+		"map[interface{}]interface{}: {'foo': 10, 'bar': 20, 'foobar': {'foo': 10, 'bar': 20}, 'foobar1': {'foo': 10, 'bar': 20}}": {
+			[]byte(`a:4:{s:3:"foo";i:10;s:3:"bar";i:20;s:6:"foobar";a:2:{s:3:"foo";i:10;s:3:"bar";i:20;}s:7:"foobar1";a:2:{s:3:"foo";i:10;s:3:"bar";i:20;}}`),
+			map[interface{}]interface{}{"foo": int64(10), "bar": int64(20), "foobar": map[interface{}]interface{}{"foo": int64(10), "bar": int64(20)}, "foobar1": map[interface{}]interface{}{"foo": int64(10), "bar": int64(20)}},
+			nil,
+		},
 		"not an array": {
 			[]byte("N;"),
 			map[interface{}]interface{}{},

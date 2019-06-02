@@ -2,9 +2,9 @@ package phpserialize
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
-	"fmt"
 )
 
 // The internal consume functions work as the parser/lexer when reading
@@ -88,7 +88,7 @@ func consumeStringRealPart(data []byte, offset int) (string, int, error) {
 	// redundant.
 	offset = newOffset + 1
 
-	s := DecodePHPString(data[offset:length+offset])
+	s := DecodePHPString(data[offset : length+offset])
 
 	// The +2 is to skip over the final '";'
 	return s, offset + length + 2, nil
@@ -305,7 +305,7 @@ func consumeAssociativeArray(data []byte, offset int) (map[interface{}]interface
 		}
 	}
 
-	return result, offset, nil
+	return result, offset + 1, nil
 }
 
 func consumeIndexedArray(data []byte, offset int) ([]interface{}, int, error) {
@@ -347,5 +347,5 @@ func consumeIndexedArray(data []byte, offset int) ([]interface{}, int, error) {
 	}
 
 	// The +1 is for the final '}'
-	return result, offset+1, nil
+	return result, offset + 1, nil
 }

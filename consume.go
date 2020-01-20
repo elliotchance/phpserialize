@@ -201,6 +201,7 @@ func setField(structFieldValue reflect.Value, value interface{}) error {
 func fillStruct(obj reflect.Value, m map[interface{}]interface{}) error {
 	// structValue := reflect.ValueOf(obj).Elem()
 	// structFieldValue := structValue.FieldByName(name)
+
 	tt := obj.Type()
 	for i := 0; i < obj.NumField(); i++ {
 		field := obj.Field(i)
@@ -213,7 +214,7 @@ func fillStruct(obj reflect.Value, m map[interface{}]interface{}) error {
 		} else if tag != "" {
 			key = tag
 		} else {
-			key = upperCaseFirstLetter(tt.Name())
+			key = lowerCaseFirstLetter(tt.Field(i).Name)
 		}
 		if v, ok := m[key]; ok {
 			setField(field, v)

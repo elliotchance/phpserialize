@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/elliotchance/phpserialize"
+	"github.com/dasjott/phpserialize"
 )
 
 func expectErrorToNotHaveOccurred(t *testing.T, err error) {
@@ -496,6 +496,29 @@ func TestUnmarshalObject(t *testing.T) {
 
 	if result.Baz != "yay" {
 		t.Errorf("Expected %v, got %v", "yay", result.Baz)
+	}
+}
+
+func TestUnmarshalObjectWithTags(t *testing.T) {
+	data := "O:7:\"struct1\":3:{s:3:\"foo\";i:10;s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:1.23;}s:3:\"baz\";s:3:\"yay\";}"
+	var result structTag
+	err := phpserialize.Unmarshal([]byte(data), &result)
+	expectErrorToNotHaveOccurred(t, err)
+
+	if result.Bar != 10 {
+		t.Errorf("Expected %v, got %v", 10, result.Bar)
+	}
+
+	if result.Foo.Qux != 1.23 {
+		t.Errorf("Expected %v, got %v", 1.23, result.Foo.Qux)
+	}
+
+	if result.Balu != "yay" {
+		t.Errorf("Expected %v, got %v", "yay", result.Balu)
+	}
+
+	if result.Ignored != "" {
+		t.Errorf("Expected %v, got %v", "yay", result.Ignored)
 	}
 }
 

@@ -165,7 +165,12 @@ func MarshalStruct(input interface{}, options *MarshalOptions) ([]byte, error) {
 		// with an uppercase letter) we must change it to lower case. If
 		// you really do want it to be upper case you will have to wait
 		// for when tags are supported on individual fields.
-		fieldName := lowerCaseFirstLetter(typeOfValue.Field(i).Name)
+		fieldName := typeOfValue.Field(i).Tag.Get("php")
+		if fieldName == "-" {
+			continue
+		} else if fieldName == "" {
+			fieldName = lowerCaseFirstLetter(typeOfValue.Field(i).Name)
+		}
 		buffer.Write(MarshalString(fieldName))
 
 		m, err := Marshal(f.Interface(), options)
@@ -188,11 +193,11 @@ func MarshalStruct(input interface{}, options *MarshalOptions) ([]byte, error) {
 // Marshal is the canonical way to perform the equivalent of serialize() in PHP.
 // It can handle encoding scalar types, slices and maps.
 func Marshal(input interface{}, options *MarshalOptions) ([]byte, error) {
-	
+
 	if options == nil {
 		options = DefaultMarshalOptions()
 	}
-	
+
 	// []byte is a special case because all strings (binary and otherwise)
 	// are handled as strings in PHP.
 	if bytesToEncode, ok := input.([]byte); ok {

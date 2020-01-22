@@ -13,6 +13,14 @@ type struct1 struct {
 	Baz    string
 }
 
+type structTag struct {
+	Foo     Struct2 `php:"bar"`
+	Bar     int     `php:"foo"`
+	hidden  bool
+	Balu    string `php:"baz"`
+	Ignored string `php:"-"`
+}
+
 type Struct2 struct {
 	Qux float64
 }
@@ -122,6 +130,13 @@ var marshalTests = map[string]marshalTest{
 	"&struct1{Foo int, Bar Struct2{Qux float64}, hidden bool}": {
 		&struct1{20, Struct2{7.89}, false, "yay"},
 		[]byte("O:7:\"struct1\":3:{s:3:\"foo\";i:20;s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:7.89;}s:3:\"baz\";s:3:\"yay\";}"),
+		nil,
+	},
+
+	// encode object (struct with tags)
+	"structTag{Bar int, Foo Struct2{Qux float64}, hidden bool, Balu string}": {
+		structTag{Struct2{1.23}, 10, true, "yay", ""},
+		[]byte("O:9:\"structTag\":4:{s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:1.23;}s:3:\"foo\";i:10;s:3:\"baz\";s:3:\"yay\";}"),
 		nil,
 	},
 

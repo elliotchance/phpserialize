@@ -1,9 +1,9 @@
 package phpserialize_test
 
 import (
-	"testing"
 	"github.com/elliotchance/phpserialize"
 	"reflect"
+	"testing"
 )
 
 func TestStringifyKeysOnEmptyMap(t *testing.T) {

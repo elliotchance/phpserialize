@@ -2,7 +2,6 @@ package phpserialize
 
 import (
 	"errors"
-	"fmt"
 	"reflect"
 	"strconv"
 )
@@ -170,19 +169,9 @@ func consumeObjectAsMap(data []byte, offset int) (
 	return result, offset + 1, nil
 }
 
-func setField(obj interface{}, name string, value interface{}) error {
-	structValue := reflect.ValueOf(obj).Elem()
-
-	// We need to uppercase the first letter for compatibility.
-	// The Marshal() function does the opposite of this.
-	structFieldValue := structValue.FieldByName(upperCaseFirstLetter(name))
-
+func setField(structFieldValue reflect.Value, value interface{}) error {
 	if !structFieldValue.IsValid() {
-		return fmt.Errorf("no such field: %s in obj", name)
-	}
-
-	if !structFieldValue.CanSet() {
-		return fmt.Errorf("cannot set %s field value", name)
+		return nil
 	}
 
 	val := reflect.ValueOf(value)
@@ -198,7 +187,7 @@ func setField(obj interface{}, name string, value interface{}) error {
 
 	case reflect.Struct:
 		m := val.Interface().(map[interface{}]interface{})
-		fillStruct(structFieldValue.Addr().Interface(), m)
+		fillStruct(structFieldValue, m)
 
 	default:
 		structFieldValue.Set(val)
@@ -208,18 +197,30 @@ func setField(obj interface{}, name string, value interface{}) error {
 }
 
 // https://stackoverflow.com/questions/26744873/converting-map-to-struct
-func fillStruct(obj interface{}, m map[interface{}]interface{}) error {
-	for k, v := range m {
-		err := setField(obj, k.(string), v)
-		if err != nil {
-			return err
+func fillStruct(obj reflect.Value, m map[interface{}]interface{}) error {
+	tt := obj.Type()
+	for i := 0; i < obj.NumField(); i++ {
+		field := obj.Field(i)
+		if !field.CanSet() {
+			continue
+		}
+		var key string
+		if tag := tt.Field(i).Tag.Get("php"); tag == "-" {
+			continue
+		} else if tag != "" {
+			key = tag
+		} else {
+			key = lowerCaseFirstLetter(tt.Field(i).Name)
+		}
+		if v, ok := m[key]; ok {
+			setField(field, v)
 		}
 	}
 
 	return nil
 }
 
-func consumeObject(data []byte, offset int, v interface{}) (int, error) {
+func consumeObject(data []byte, offset int, v reflect.Value) (int, error) {
 	if !checkType(data, 'O', offset) {
 		return -1, errors.New("not an object")
 	}

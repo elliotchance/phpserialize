@@ -113,7 +113,7 @@ func UnmarshalAssociativeArray(data []byte) (map[interface{}]interface{}, error)
 	return result, err
 }
 
-func UnmarshalObject(data []byte, v interface{}) error {
+func UnmarshalObject(data []byte, v reflect.Value) error {
 	_, err := consumeObject(data, 0, v)
 	return err
 }
@@ -122,8 +122,7 @@ func Unmarshal(data []byte, v interface{}) error {
 	value := reflect.ValueOf(v).Elem()
 
 	switch value.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32,
-		reflect.Int64:
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		v, err := UnmarshalInt(data)
 		if err != nil {
 			return err
@@ -195,7 +194,7 @@ func Unmarshal(data []byte, v interface{}) error {
 		return nil
 
 	case reflect.Struct:
-		err := UnmarshalObject(data, v)
+		err := UnmarshalObject(data, value)
 		if err != nil {
 			return err
 		}

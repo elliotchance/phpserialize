@@ -1,7 +1,7 @@
 package phpserialize_test
 
 import (
-	"github.com/dasjott/phpserialize"
+	"github.com/elliotchance/phpserialize"
 	"reflect"
 	"testing"
 )

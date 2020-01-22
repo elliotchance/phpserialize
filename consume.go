@@ -172,7 +172,6 @@ func consumeObjectAsMap(data []byte, offset int) (
 func setField(structFieldValue reflect.Value, value interface{}) error {
 	if !structFieldValue.IsValid() {
 		return nil
-		// return fmt.Errorf("no such field: %s in obj", name)
 	}
 
 	val := reflect.ValueOf(value)
@@ -199,9 +198,6 @@ func setField(structFieldValue reflect.Value, value interface{}) error {
 
 // https://stackoverflow.com/questions/26744873/converting-map-to-struct
 func fillStruct(obj reflect.Value, m map[interface{}]interface{}) error {
-	// structValue := reflect.ValueOf(obj).Elem()
-	// structFieldValue := structValue.FieldByName(name)
-
 	tt := obj.Type()
 	for i := 0; i < obj.NumField(); i++ {
 		field := obj.Field(i)
@@ -220,13 +216,6 @@ func fillStruct(obj reflect.Value, m map[interface{}]interface{}) error {
 			setField(field, v)
 		}
 	}
-
-	// for k, v := range m {
-	// 	err := setField(obj, k.(string), v)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
 
 	return nil
 }

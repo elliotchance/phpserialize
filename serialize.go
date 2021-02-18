@@ -165,7 +165,7 @@ func MarshalStruct(input interface{}, options *MarshalOptions) ([]byte, error) {
 		// with an uppercase letter) we must change it to lower case. If
 		// you really do want it to be upper case you will have to wait
 		// for when tags are supported on individual fields.
-		fieldName := typeOfValue.Field(i).Tag.Get("php")
+		fieldName, _ := parseTag(typeOfValue.Field(i).Tag.Get("php"))
 		if fieldName == "-" {
 			continue
 		} else if fieldName == "" {

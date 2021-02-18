@@ -17,8 +17,9 @@ type structTag struct {
 	Foo     Struct2 `php:"bar"`
 	Bar     int     `php:"foo"`
 	hidden  bool
-	Balu    string `php:"baz"`
-	Ignored string `php:"-"`
+	Balu    string   `php:"baz"`
+	Ignored string   `php:"-"`
+	Nilptr  *Struct2 `php:",omitnilptr"`
 }
 
 type Struct2 struct {
@@ -134,9 +135,9 @@ var marshalTests = map[string]marshalTest{
 	},
 
 	// encode object (struct with tags)
-	"structTag{Bar int, Foo Struct2{Qux float64}, hidden bool, Balu string}": {
-		structTag{Struct2{1.23}, 10, true, "yay", ""},
-		[]byte("O:9:\"structTag\":4:{s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:1.23;}s:3:\"foo\";i:10;s:3:\"baz\";s:3:\"yay\";}"),
+	"structTag{Bar int, Foo Struct2{Qux float64}, hidden bool, Balu string, Nilptr <nil>}": {
+		structTag{Struct2{1.23}, 10, true, "yay", "", nil},
+		[]byte("O:9:\"structTag\":3:{s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:1.23;}s:3:\"foo\";i:10;s:3:\"baz\";s:3:\"yay\";}"),
 		nil,
 	},
 
@@ -166,8 +167,8 @@ func TestMarshal(t *testing.T) {
 			}
 
 			if !reflect.DeepEqual(result, test.output) {
-				t.Errorf("Expected '%v', got '%v'", string(result),
-					string(test.output))
+				t.Errorf("Expected '%v', got '%v'", string(test.output),
+					string(result))
 			}
 		})
 	}

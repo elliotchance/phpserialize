@@ -17,8 +17,8 @@ go get -u github.com/elliotchance/phpserialize
 package main
 
 import (
-	"github.com/elliotchance/phpserialize"
 	"fmt"
+	"github.com/elliotchance/phpserialize"
 )
 
 func main() {
@@ -33,5 +33,39 @@ func main() {
 	err = phpserialize.Unmarshal(out, &in)
 
 	fmt.Println(in)
+}
+```
+
+### Using struct field tags for marshalling
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/elliotchance/phpserialize"
+)
+
+type MyStruct struct {
+	// Will be marhsalled as my_purpose
+	MyPurpose string `php:"my_purpose"`
+	// Will be marshalled as my_motto, and only if not a nil pointer
+	MyMotto *string `php:"my_motto,omitnilptr"`
+	// Will not be marshalled
+	MySecret string `php:"-"`
+}
+
+func main() {
+	my := MyStruct{
+		MyPurpose: "No purpose",
+		MySecret:  "Has a purpose",
+	}
+
+	out, err := phpserialize.Marshal(my, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(out)
 }
 ```

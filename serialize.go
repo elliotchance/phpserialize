@@ -161,12 +161,17 @@ func MarshalStruct(input interface{}, options *MarshalOptions) ([]byte, error) {
 
 		visibleFieldCount++
 
-		// Note: since we can only export fields that are public (start
-		// with an uppercase letter) we must change it to lower case. If
-		// you really do want it to be upper case you will have to wait
-		// for when tags are supported on individual fields.
-		fieldName := typeOfValue.Field(i).Tag.Get("php")
+		fieldName, fieldOptions := parseTag(typeOfValue.Field(i).Tag.Get("php"))
+
+		if fieldOptions.Contains("omitnilptr") {
+			if f.Kind() == reflect.Ptr && f.IsNil() {
+				visibleFieldCount--
+				continue
+			}
+		}
+
 		if fieldName == "-" {
+			visibleFieldCount--
 			continue
 		} else if fieldName == "" {
 			fieldName = lowerCaseFirstLetter(typeOfValue.Field(i).Name)

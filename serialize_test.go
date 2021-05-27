@@ -26,6 +26,13 @@ type Struct2 struct {
 	Qux float64
 }
 
+type Struct3 struct {
+	ObjectArray []Struct2
+	IntArray    []int64
+	FloatArray  []float64
+	StringArray []string
+}
+
 type marshalTest struct {
 	input   interface{}
 	output  []byte
@@ -131,6 +138,13 @@ var marshalTests = map[string]marshalTest{
 	"&struct1{Foo int, Bar Struct2{Qux float64}, hidden bool}": {
 		&struct1{20, Struct2{7.89}, false, "yay"},
 		[]byte("O:7:\"struct1\":3:{s:3:\"foo\";i:20;s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:7.89;}s:3:\"baz\";s:3:\"yay\";}"),
+		nil,
+	},
+
+	// encode object with array of objects
+	"struct3{ObjectArray Struct2{Qux float64}, IntArray {1, 2}, FloatArray {1.0, 2.0}, StringArray {'a', 'b'}}": {
+		Struct3{[]Struct2{{1.1}, {2.2}}, []int64{1, 2}, []float64{1.0, 2.0}, []string{"a", "b"}},
+		[]byte("O:7:\"Struct3\":4:{s:11:\"objectArray\";a:2:{i:0;O:7:\"Struct2\":1:{s:3:\"qux\";d:1.1;}i:1;O:7:\"Struct2\":1:{s:3:\"qux\";d:2.2;}}s:8:\"intArray\";a:2:{i:0;i:1;i:1;i:2;}s:10:\"floatArray\";a:2:{i:0;d:1;i:1;d:2;}s:11:\"stringArray\";a:2:{i:0;s:1:\"a\";i:1;s:1:\"b\";}}"),
 		nil,
 	},
 

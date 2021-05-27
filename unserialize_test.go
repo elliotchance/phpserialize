@@ -598,6 +598,26 @@ func TestUnmarshalArrayThatContainsInteger(t *testing.T) {
 	}
 }
 
+func TestUnmarshalObjectThatContainsArray(t *testing.T) {
+	data := "O:7:\"Struct3\":4:{s:11:\"objectArray\";a:2:{i:0;O:7:\"Struct2\":1:{s:3:\"qux\";d:1.1;}i:1;O:7:\"Struct2\":1:{s:3:\"qux\";d:2.2;}}s:8:\"intArray\";a:2:{i:0;i:1;i:1;i:2;}s:10:\"floatArray\";a:2:{i:0;d:1;i:1;d:2;}s:11:\"stringArray\";a:2:{i:0;s:1:\"a\";i:1;s:1:\"b\";}}"
+	var result Struct3
+	err := phpserialize.Unmarshal([]byte(data), &result)
+	expectErrorToNotHaveOccurred(t, err)
+
+	if len(result.ObjectArray) == 0 {
+		t.Errorf("Expected %v, got %v", 2, len(result.ObjectArray))
+	}
+	if len(result.IntArray) == 0 {
+		t.Errorf("Expected %v, got %v", 2, len(result.IntArray))
+	}
+	if len(result.FloatArray) == 0 {
+		t.Errorf("Expected %v, got %v", 2, len(result.FloatArray))
+	}
+	if len(result.StringArray) == 0 {
+		t.Errorf("Expected %v, got %v", 2, len(result.StringArray))
+	}
+}
+
 // https://github.com/elliotchance/phpserialize/issues/1
 func TestUnmarshalMultibyte(t *testing.T) {
 	data := `a:3:{i:0;a:2:{i:0;s:6:"白色";i:1;s:6:"黑色";}i:1;a:3:{i:0;s:3:"大";i:1;s:3:"中";i:2;s:3:"小";}i:2;a:2:{i:0;s:3:"女";i:1;s:3:"男";}}`

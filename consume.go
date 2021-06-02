@@ -189,6 +189,29 @@ func setField(structFieldValue reflect.Value, value interface{}) error {
 		m := val.Interface().(map[interface{}]interface{})
 		fillStruct(structFieldValue, m)
 
+	case reflect.Slice:
+		l := val.Len()
+		arrayOfObjects := reflect.MakeSlice(structFieldValue.Type(), l, l)
+
+		for i := 0; i < l; i++ {
+			if m, ok := val.Index(i).Interface().(map[interface{}]interface{}); ok {
+				obj := arrayOfObjects.Index(i)
+				fillStruct(obj, m)
+			} else {
+				switch arrayOfObjects.Index(i).Kind() {
+				case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+					arrayOfObjects.Index(i).SetInt(val.Index(i).Elem().Int())
+				case reflect.Float32, reflect.Float64:
+					arrayOfObjects.Index(i).SetFloat(val.Index(i).Elem().Float())
+				default:
+					arrayOfObjects.Index(i).Set(val.Index(i).Elem())
+				}
+
+			}
+		}
+
+		structFieldValue.Set(arrayOfObjects)
+
 	default:
 		structFieldValue.Set(val)
 	}

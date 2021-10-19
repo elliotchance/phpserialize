@@ -24,7 +24,7 @@ func findByte(data []byte, lookingFor byte, offset int) int {
 // into a UTF8 string ("Björk", in that case).
 func DecodePHPString(data []byte) string {
 	var buffer bytes.Buffer
-	for i := 0; i < len(data); i++ {
+	for i := 0; i < len(data)-1; i++ {
 		if data[i] == '\\' {
 			switch data[i+1] {
 			case 'x':

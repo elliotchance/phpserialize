@@ -233,6 +233,7 @@ func TestUnmarshalString(t *testing.T) {
 			nil,
 		},
 		"not a string": {[]byte("N;"), "", errors.New("not a string")},
+		"Backslash":    {[]byte("s:1:\"\\\";"), "\\", nil},
 	}
 
 	for testName, test := range tests {

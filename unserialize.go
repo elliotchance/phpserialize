@@ -134,7 +134,7 @@ func Unmarshal(data []byte, v interface{}) error {
 
 		value.SetInt(v)
 
-	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		v, err := UnmarshalUint(data)
 		if err != nil {
 			return err

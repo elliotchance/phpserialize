@@ -225,7 +225,7 @@ func Marshal(input interface{}, options *MarshalOptions) ([]byte, error) {
 		reflect.Int64:
 		return MarshalInt(value.Int()), nil
 
-	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		return MarshalUint(value.Uint()), nil
 
 	case reflect.Float32:

@@ -66,6 +66,7 @@ var marshalTests = map[string]marshalTest{
 	"int32: 27": {int32(27), []byte("i:27;"), nil},
 	"int64: 28": {int64(28), []byte("i:28;"), nil},
 
+	"uint: 3":    {uint(3), []byte("i:3;"), nil},
 	"uint8: 4":   {uint8(4), []byte("i:4;"), nil},
 	"uint16: 7":  {uint16(7), []byte("i:7;"), nil},
 	"uint32: 9":  {uint32(9), []byte("i:9;"), nil},

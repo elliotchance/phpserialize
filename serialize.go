@@ -16,6 +16,7 @@ type MarshalOptions struct {
 	// and "stdClass" will be used instead. The default value is false.
 	OnlyStdClass bool
 	StructName   string
+	LaravelQueue bool
 }
 
 // DefaultMarshalOptions will create a new instance of MarshalOptions with
@@ -23,6 +24,8 @@ type MarshalOptions struct {
 func DefaultMarshalOptions() *MarshalOptions {
 	options := new(MarshalOptions)
 	options.OnlyStdClass = false
+	options.StructName = ""
+	options.LaravelQueue = false
 
 	return options
 }
@@ -176,7 +179,10 @@ func MarshalStruct(input interface{}, options *MarshalOptions) ([]byte, error) {
 			continue
 		} else if fieldName == "" {
 			fieldName = lowerCaseFirstLetter(typeOfValue.Field(i).Name)
+		} else if fieldName == "data" {
+			fieldName = "\000" + options.StructName + "\000" + fieldName
 		}
+
 		buffer.Write(MarshalString(fieldName))
 
 		m, err := Marshal(f.Interface(), options)

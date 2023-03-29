@@ -180,7 +180,7 @@ func MarshalStruct(input interface{}, options *MarshalOptions) ([]byte, error) {
 		} else if fieldName == "" {
 			fieldName = lowerCaseFirstLetter(typeOfValue.Field(i).Name)
 		} else if fieldName == "data" {
-			fieldName = "\000" + options.StructName + "\000" + fieldName
+			fieldName = "\u0000" + options.StructName + "\u0000" + fieldName
 		}
 
 		buffer.Write(MarshalString(fieldName))

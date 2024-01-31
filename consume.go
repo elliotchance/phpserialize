@@ -175,6 +175,11 @@ func setField(structFieldValue reflect.Value, value interface{}) error {
 	}
 
 	val := reflect.ValueOf(value)
+	if !val.IsValid() {
+		// structFieldValue will be set to default.
+		return nil
+	}
+
 	switch structFieldValue.Type().Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		structFieldValue.SetInt(val.Int())
@@ -211,7 +216,10 @@ func setField(structFieldValue reflect.Value, value interface{}) error {
 		}
 
 		structFieldValue.Set(arrayOfObjects)
-
+	case reflect.Ptr:
+		// Instantiate structFieldValue.
+		structFieldValue.Set(reflect.New(structFieldValue.Type().Elem()))
+		return setField(structFieldValue.Elem(), value)
 	default:
 		structFieldValue.Set(val)
 	}

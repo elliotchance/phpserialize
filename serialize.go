@@ -247,6 +247,9 @@ func Marshal(input interface{}, options *MarshalOptions) ([]byte, error) {
 		return MarshalStruct(input, options)
 
 	case reflect.Ptr:
+		if value.IsNil() {
+			return MarshalNil(), nil
+		}
 		return Marshal(value.Elem().Interface(), options)
 
 	default:

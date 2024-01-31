@@ -537,6 +537,74 @@ func TestUnmarshalObjectWithTags(t *testing.T) {
 	}
 }
 
+func TestUnmarshalPointers(t *testing.T) {
+	data := "O:8:\"Nillable\":4:{s:3:\"foo\";s:3:\"yay\";s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:10;}s:6:\"fooPtr\";s:3:\"hey\";s:6:\"barPtr\";O:7:\"Struct2\":1:{s:3:\"qux\";d:0;}}"
+	target := &Nillable{
+		Foo: "yay",
+		Bar: Struct2{
+			Qux: 10,
+		},
+		FooPtr: &heyStr,
+		BarPtr: &Struct2{
+			Qux: 0,
+		},
+	}
+
+	var result Nillable
+	err := phpserialize.Unmarshal([]byte(data), &result)
+	expectErrorToNotHaveOccurred(t, err)
+
+	if result.Foo != target.Foo {
+		t.Errorf("Expected %v, got %v for Foo", target.Foo, result.Foo)
+	}
+
+	if result.Bar.Qux != target.Bar.Qux {
+		t.Errorf("Expected %v, got %v for Bar", target.Bar, result.Bar)
+	}
+
+	if result.FooPtr == nil || *result.FooPtr != *target.FooPtr {
+		t.Errorf("Expected %v, got %v for FooPtr", *target.FooPtr, *result.FooPtr)
+	}
+
+	if result.BarPtr == nil || result.BarPtr.Qux != result.BarPtr.Qux {
+		t.Errorf("Expected %v, got %v for BarPtr", target.BarPtr, result.BarPtr)
+	}
+
+}
+
+func TestUnmarshalPointersWithNull(t *testing.T) {
+	data := "O:8:\"Nillable\":4:{s:3:\"foo\";s:0:\"\";s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:0;}s:6:\"fooPtr\";N;s:6:\"barPtr\";N;}"
+
+	target := &Nillable{
+		Foo: "",
+		Bar: Struct2{
+			Qux: 0,
+		},
+		FooPtr: nil,
+		BarPtr: nil,
+	}
+
+	var result Nillable
+	err := phpserialize.Unmarshal([]byte(data), &result)
+	expectErrorToNotHaveOccurred(t, err)
+
+	if result.Foo != target.Foo {
+		t.Errorf("Expected %v, got %v for Foo", target.Foo, result.Foo)
+	}
+
+	if result.Bar.Qux != target.Bar.Qux {
+		t.Errorf("Expected %v, got %v for Bar", target.Bar, result.Bar)
+	}
+
+	if result.FooPtr != target.FooPtr {
+		t.Errorf("Expected %v, got %v for FooPtr", target.FooPtr, result.FooPtr)
+	}
+
+	if result.BarPtr != target.BarPtr {
+		t.Errorf("Expected %v, got %v for BarPtr", target.BarPtr, result.BarPtr)
+	}
+}
+
 func TestUnmarshalObjectIntoMap(t *testing.T) {
 	data := "O:7:\"struct1\":3:{s:3:\"foo\";i:10;s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:1.23;}s:3:\"baz\";s:3:\"yay\";}"
 	var result map[interface{}]interface{}

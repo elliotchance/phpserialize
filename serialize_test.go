@@ -6,6 +6,10 @@ import (
 	"testing"
 )
 
+var (
+	heyStr = "hey"
+)
+
 type struct1 struct {
 	Foo    int
 	Bar    Struct2
@@ -31,6 +35,13 @@ type Struct3 struct {
 	IntArray    []int64
 	FloatArray  []float64
 	StringArray []string
+}
+
+type Nillable struct {
+	Foo    string
+	Bar    Struct2
+	FooPtr *string
+	BarPtr *Struct2
 }
 
 type marshalTest struct {
@@ -166,6 +177,18 @@ var marshalTests = map[string]marshalTest{
 		&struct1{20, Struct2{7.89}, false, "yay"},
 		[]byte("O:8:\"stdClass\":3:{s:3:\"foo\";i:20;s:3:\"bar\";O:8:\"stdClass\":1:{s:3:\"qux\";d:7.89;}s:3:\"baz\";s:3:\"yay\";}"),
 		getStdClassOnly(),
+	},
+
+	// encode object with pointers
+	"Nillable{Foo string, Bar Struct2{Qux float64}, FooPtr *string, BarPtr *Struct2{Qux float64}": {
+		Nillable{"yay", Struct2{10}, &heyStr, &Struct2{}},
+		[]byte("O:8:\"Nillable\":4:{s:3:\"foo\";s:3:\"yay\";s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:10;}s:6:\"fooPtr\";s:3:\"hey\";s:6:\"barPtr\";O:7:\"Struct2\":1:{s:3:\"qux\";d:0;}}"),
+		nil,
+	},
+	"Nillable{Foo string, Bar Struct2{Qux float64}, FooPtr <nil>, BarPtr <nil>": {
+		Nillable{"", Struct2{}, nil, nil},
+		[]byte("O:8:\"Nillable\":4:{s:3:\"foo\";s:0:\"\";s:3:\"bar\";O:7:\"Struct2\":1:{s:3:\"qux\";d:0;}s:6:\"fooPtr\";N;s:6:\"barPtr\";N;}"),
+		nil,
 	},
 }
 

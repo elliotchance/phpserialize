@@ -15,6 +15,8 @@ type MarshalOptions struct {
 	// If this is true, then all struct names will be stripped from objects
 	// and "stdClass" will be used instead. The default value is false.
 	OnlyStdClass bool
+	StructName   string
+	LaravelQueue bool
 }
 
 // DefaultMarshalOptions will create a new instance of MarshalOptions with
@@ -22,6 +24,8 @@ type MarshalOptions struct {
 func DefaultMarshalOptions() *MarshalOptions {
 	options := new(MarshalOptions)
 	options.OnlyStdClass = false
+	options.StructName = ""
+	options.LaravelQueue = false
 
 	return options
 }
@@ -29,12 +33,12 @@ func DefaultMarshalOptions() *MarshalOptions {
 // MarshalBool returns the bytes to represent a PHP serialized bool value. This
 // would be the equivalent to running:
 //
-//     echo serialize(false);
-//     // b:0;
+//	echo serialize(false);
+//	// b:0;
 //
 // The same result would be returned by marshalling a boolean value:
 //
-//     Marshal(true)
+//	Marshal(true)
 func MarshalBool(value bool) []byte {
 	if value {
 		return []byte("b:1;")
@@ -46,12 +50,12 @@ func MarshalBool(value bool) []byte {
 // MarshalInt returns the bytes to represent a PHP serialized integer value.
 // This would be the equivalent to running:
 //
-//     echo serialize(123);
-//     // i:123;
+//	echo serialize(123);
+//	// i:123;
 //
 // The same result would be returned by marshalling an integer value:
 //
-//     Marshal(123)
+//	Marshal(123)
 func MarshalInt(value int64) []byte {
 	return []byte("i:" + strconv.FormatInt(value, 10) + ";")
 }
@@ -65,22 +69,22 @@ func MarshalUint(value uint64) []byte {
 // MarshalFloat returns the bytes to represent a PHP serialized floating-point
 // value. This would be the equivalent to running:
 //
-//     echo serialize(1.23);
-//     // d:1.23;
+//	echo serialize(1.23);
+//	// d:1.23;
 //
 // The bitSize should represent the size of the float. This makes conversion to
 // a string value more accurate, for example:
 //
-//     // float64 is implicit for literals
-//     MarshalFloat(1.23, 64)
+//	// float64 is implicit for literals
+//	MarshalFloat(1.23, 64)
 //
-//     // If the original value was cast from a float32
-//     f := float32(1.23)
-//     MarshalFloat(float64(f), 32)
+//	// If the original value was cast from a float32
+//	f := float32(1.23)
+//	MarshalFloat(float64(f), 32)
 //
 // The same result would be returned by marshalling a floating-point value:
 //
-//     Marshal(1.23)
+//	Marshal(1.23)
 func MarshalFloat(value float64, bitSize int) []byte {
 	return []byte("d:" + strconv.FormatFloat(value, 'f', -1, bitSize) + ";")
 }
@@ -88,12 +92,12 @@ func MarshalFloat(value float64, bitSize int) []byte {
 // MarshalString returns the bytes to represent a PHP serialized string value.
 // This would be the equivalent to running:
 //
-//     echo serialize('Hello world');
-//     // s:11:"Hello world";
+//	echo serialize('Hello world');
+//	// s:11:"Hello world";
 //
 // The same result would be returned by marshalling a string value:
 //
-//     Marshal('Hello world')
+//	Marshal('Hello world')
 //
 // One important distinction is that PHP stores binary data in strings. See
 // MarshalBytes for more information.
@@ -125,8 +129,8 @@ func MarshalBytes(value []byte) []byte {
 // MarshalNil returns the bytes to represent a PHP serialized null value.
 // This would be the equivalent to running:
 //
-//     echo serialize(null);
-//     // N;
+//	echo serialize(null);
+//	// N;
 //
 // Unlike the other specific Marshal functions it does not take an argument
 // because the output is a constant value.
@@ -175,7 +179,10 @@ func MarshalStruct(input interface{}, options *MarshalOptions) ([]byte, error) {
 			continue
 		} else if fieldName == "" {
 			fieldName = lowerCaseFirstLetter(typeOfValue.Field(i).Name)
+		} else if fieldName == "data" {
+			fieldName = "\u0000" + options.StructName + "\u0000" + fieldName
 		}
+
 		buffer.Write(MarshalString(fieldName))
 
 		m, err := Marshal(f.Interface(), options)
@@ -189,6 +196,10 @@ func MarshalStruct(input interface{}, options *MarshalOptions) ([]byte, error) {
 	className := reflect.ValueOf(input).Type().Name()
 	if options.OnlyStdClass {
 		className = "stdClass"
+	}
+
+	if options.StructName != "" {
+		className = options.StructName
 	}
 
 	return []byte(fmt.Sprintf("O:%d:\"%s\":%d:{%s}", len(className),
